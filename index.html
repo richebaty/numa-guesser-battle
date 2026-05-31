@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ぬまゲッサー — NUMA-GUESSER</title>
+<style>
+  :root {
+    --ink: #1a2634;
+    --paper: #fbf7ef;
+    --sea: #2d6a8e;
+    --sea-deep: #1c4d6b;
+    --coral: #ee7a52;
+    --coral-soft: #f59b7c;
+    --gold: #e0b94a;
+    --sky1: #ffd6a5;
+    --sky2: #a8d8ea;
+    --sky3: #6fb3d2;
+    --fog: rgba(251,247,239,0.94);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overscroll-behavior:none; }
+  body {
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Mincho ProN","Yu Mincho",serif;
+    background:var(--ink); color:var(--paper);
+    overflow:hidden;
+  }
+  #app { position:fixed; inset:0; }
+  /* ===== 対戦版 追加スタイル ===== */
+  .mode-row { display:flex; gap:10px; margin:14px 0 4px; }
+  .mode-btn {
+    flex:1; padding:13px 8px; border:none; border-radius:14px; cursor:pointer;
+    font-family:inherit; font-size:15px; font-weight:bold; color:var(--ink);
+    background:var(--paper); box-shadow:0 3px 0 rgba(0,0,0,0.18); transition:transform .1s;
+  }
+  .mode-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
+  .mode-btn.sub { background:var(--sky2); }
+  .vs-box {
+    margin:10px auto 0; max-width:300px; background:var(--fog); color:var(--ink);
+    border-radius:16px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  }
+  .vs-box p { font-size:13px; line-height:1.6; margin:6px 0; }
+  .vs-box input {
+    width:100%; padding:11px; font-size:18px; text-align:center; letter-spacing:3px;
+    border:2px solid var(--sea); border-radius:10px; font-family:inherit; text-transform:uppercase;
+    margin:8px 0; background:#fff; color:var(--ink);
+  }
+  .room-code {
+    font-size:30px; font-weight:bold; letter-spacing:6px; color:var(--sea-deep);
+    text-align:center; margin:8px 0; user-select:all;
+  }
+  .vs-status { font-size:13px; color:var(--sea-deep); text-align:center; margin-top:6px; min-height:18px; }
+  /* 対戦中の相手スコア表示 */
+  .oppbar {
+    position:absolute; top:calc(var(--safe-t) + 14px); left:50%; transform:translateX(-50%);
+    z-index:30; display:none; gap:18px; align-items:center;
+    background:var(--fog); color:var(--ink); border-radius:999px;
+    padding:7px 18px; box-shadow:0 4px 14px rgba(0,0,0,0.25); font-size:13px; white-space:nowrap;
+  }
+  .oppbar .me  { color:var(--coral); font-weight:bold; }
+  .oppbar .opp { color:var(--sea); font-weight:bold; }
+  .oppbar .sep { opacity:0.5; }
+  .wait-overlay {
+    position:absolute; inset:0; z-index:60; display:none;
+    align-items:center; justify-content:center; flex-direction:column;
+    background:rgba(26,38,52,0.82); color:var(--paper); text-align:center; padding:30px;
+  }
+  .wait-overlay.show { display:flex; }
+  .wait-overlay .spin {
+    width:46px; height:46px; border:5px solid rgba(251,247,239,0.3);
+    border-top-color:var(--coral); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:18px;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .result-vs { font-size:14px; color:var(--sea-deep); margin:6px 0 2px; min-height:20px; font-weight:bold; }
+  .final-verdict { font-size:26px; font-weight:bold; margin:4px 0 10px; }
+  .final-verdict.win  { color:var(--coral); }
+  .final-verdict.lose { color:var(--sea); }
+  .final-verdict.draw { color:var(--gold); }
+
+  /* ===== Street View ===== */
+  #pano { position:absolute; inset:0; background:#0d1620; }
+
+  /* ===== Top bar ===== */
+  .topbar {
+    position:absolute; top:0; left:0; right:0; z-index:30;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:calc(10px + var(--safe-t)) 16px 10px;
+    background:linear-gradient(180deg, rgba(13,22,32,0.8), transparent);
+    pointer-events:none;
+  }
+  .brand .jp {
+    font-size:19px; letter-spacing:2px; font-weight:700;
+    text-shadow:0 2px 8px rgba(0,0,0,0.6);
+  }
+  .brand .en {
+    font-family:"Helvetica Neue",sans-serif; font-size:8px;
+    letter-spacing:3px; color:var(--gold); margin-top:1px;
+  }
+  .scorebox {
+    text-align:right; background:rgba(13,22,32,0.5);
+    padding:6px 12px; border:1px solid rgba(224,185,74,0.4);
+    border-radius:12px; backdrop-filter:blur(6px);
+  }
+  .scorebox .label { font-size:8px; letter-spacing:2px; color:var(--gold); }
+  .scorebox .val { font-size:18px; font-family:"Helvetica Neue",sans-serif; font-weight:700; line-height:1.1; }
+  .scorebox .round { font-size:9px; color:rgba(251,247,239,0.65); }
+
+  /* ===== Timer ===== */
+  .timer {
+    position:absolute; z-index:28; top:calc(58px + var(--safe-t)); left:50%;
+    transform:translateX(-50%);
+    background:rgba(13,22,32,0.6); backdrop-filter:blur(6px);
+    border:2px solid var(--gold); border-radius:24px;
+    padding:6px 20px; display:flex; align-items:baseline; gap:3px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.35);
+    transition:border-color .3s, transform .15s;
+    pointer-events:none;
+  }
+  .timer #timerNum { font-family:"Helvetica Neue",sans-serif; font-size:26px; font-weight:700; line-height:1; }
+  .timer .timer-unit { font-size:12px; color:rgba(251,247,239,0.7); }
+  .timer.warn { border-color:var(--coral); animation:tick .5s ease-in-out infinite; }
+  @keyframes tick { 0%,100%{transform:translateX(-50%) scale(1)} 50%{transform:translateX(-50%) scale(1.1)} }
+
+  /* ===== Mini-map (PC: 常設・右下) ===== */
+  #guesspanel {
+    position:absolute; right:22px; bottom:22px; z-index:25;
+    background:var(--paper);
+    border-radius:14px;
+    box-shadow:0 10px 34px rgba(0,0,0,0.45);
+    overflow:hidden;
+    width:340px;
+    transition:width .35s ease, height .35s ease;
+  }
+  #guesspanel.expanded { width:min(560px,46vw); }
+  .handle-row {
+    height:40px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 14px; cursor:pointer;
+    background:var(--sea-deep); color:#fff;
+  }
+  .handle-label { font-size:12px; letter-spacing:2px; font-weight:700; }
+  .handle-expand { font-size:16px; opacity:.85; }
+  #map { width:100%; height:240px; background:#dde6ea; transition:height .35s ease; }
+  #guesspanel.expanded #map { height:min(54vh,440px); }
+  .panel-actions { padding:12px 14px; }
+
+  .btn {
+    font-family:inherit; cursor:pointer; border:none;
+    border-radius:12px; font-weight:700;
+    transition:transform .12s, box-shadow .15s, opacity .2s;
+  }
+  .btn:active { transform:scale(.98); }
+  .btn-guess {
+    width:100%; background:var(--coral); color:#fff;
+    font-size:16px; letter-spacing:3px; padding:13px;
+    box-shadow:0 5px 16px rgba(238,122,82,0.5);
+  }
+  .btn-guess:disabled { opacity:.45; box-shadow:none; }
+
+  /* ===== Overlays ===== */
+  .overlay {
+    position:absolute; inset:0; z-index:50;
+    background:var(--fog); display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px); color:var(--ink); padding:20px;
+  }
+  .overlay.show { display:flex; animation:fade .45s ease; }
+  @keyframes fade { from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
+
+  .panel {
+    background:var(--paper); border-radius:22px;
+    box-shadow:0 18px 50px rgba(0,0,0,0.28);
+    padding:30px 26px 26px; max-width:440px; width:100%;
+    text-align:center; position:relative;
+    border:1px solid rgba(224,185,74,0.35);
+  }
+  .panel .seal {
+    position:absolute; top:-26px; left:50%; transform:translateX(-50%);
+    width:56px; height:56px; border-radius:50%;
+    background:var(--coral); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; box-shadow:0 6px 14px rgba(238,122,82,0.45);
+    border:3px solid var(--paper);
+  }
+  .panel h2 { font-size:25px; letter-spacing:3px; margin:10px 0 3px; }
+  .panel .sub { font-size:10px; color:var(--sea); letter-spacing:3px; margin-bottom:18px; }
+  .resultmap { width:100%; height:180px; border-radius:14px; overflow:hidden; margin-bottom:16px; background:#dde6ea; }
+  .stat-row { display:flex; justify-content:space-around; margin-bottom:16px; }
+  .stat .n { font-size:26px; font-weight:700; font-family:"Helvetica Neue",sans-serif; color:var(--sea-deep); }
+  .stat .l { font-size:10px; letter-spacing:2px; color:rgba(26,38,52,0.55); }
+  .placename { font-size:14px; letter-spacing:1px; margin-bottom:18px; color:var(--sea-deep); }
+  .tanka { font-size:13px; color:var(--sea); font-style:italic; margin-bottom:20px; line-height:2; white-space:pre-line; }
+
+  /* ===== Splash (cute) ===== */
+  .splash {
+    position:absolute; inset:0; z-index:60; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    text-align:center;
+    background:linear-gradient(170deg, var(--sky1) 0%, var(--sky2) 45%, var(--sky3) 100%);
+  }
+  @media (min-aspect-ratio:1/1){
+    .splash-content { padding-bottom:8vh; }
+    .sun { top:8%; width:110px; height:110px; }
+    .fuji { bottom:30%; }
+    .splash h1 { font-size:48px; }
+  }
+  .splash.hide { display:none; }
+  /* sun */
+  .sun {
+    position:absolute; top:11%; left:50%; transform:translateX(-50%);
+    width:90px; height:90px; border-radius:50%;
+    background:radial-gradient(circle at 50% 50%, #fff3d6, #ffd98a 70%, #ffcf6e);
+    box-shadow:0 0 60px 18px rgba(255,221,150,0.6);
+    animation:floaty 5s ease-in-out infinite;
+  }
+  @keyframes floaty { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-10px)} }
+  /* Mt Fuji */
+  .fuji {
+    position:absolute; bottom:26%; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:130px solid transparent;
+    border-right:130px solid transparent; border-bottom:150px solid #5a7d97;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+  }
+  .fuji::after {
+    content:""; position:absolute; left:-46px; top:0; width:92px; height:46px;
+    background:#fbf7ef; clip-path:polygon(50% 0, 78% 60%, 62% 48%, 50% 70%, 38% 48%, 22% 60%);
+  }
+  /* sea */
+  .sea-band {
+    position:absolute; bottom:0; left:0; right:0; height:30%;
+    background:linear-gradient(180deg, var(--sea) 0%, var(--sea-deep) 100%);
+  }
+  .wave {
+    position:absolute; left:0; right:0; height:22px;
+    background:radial-gradient(circle at 12px -6px, transparent 12px, var(--paper) 13px) repeat-x;
+    background-size:24px 22px; opacity:.25;
+  }
+  .wave.w1 { bottom:28%; animation:drift 6s linear infinite; }
+  .wave.w2 { bottom:24%; opacity:.15; animation:drift 9s linear infinite reverse; }
+  @keyframes drift { from{background-position:0 0} to{background-position:48px 0} }
+  /* little boat */
+  .boat { position:absolute; bottom:20%; font-size:30px; animation:sail 8s ease-in-out infinite; }
+  @keyframes sail { 0%{left:-12%} 100%{left:108%} }
+  /* pine */
+  .pine { position:absolute; bottom:27%; font-size:34px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.15)); }
+  .pine.p1 { left:10%; } .pine.p2 { right:12%; font-size:28px; }
+
+  .splash-content {
+    position:relative; z-index:5; width:100%;
+    padding:0 24px calc(46px + var(--safe-b));
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .title-card {
+    background:rgba(251,247,239,0.85); backdrop-filter:blur(8px);
+    border-radius:26px; padding:22px 30px 24px;
+    box-shadow:0 12px 36px rgba(28,77,107,0.25);
+    border:2px solid #fff; margin-bottom:22px;
+  }
+  .splash h1 {
+    font-size:40px; letter-spacing:3px; color:var(--sea-deep);
+    font-weight:800; text-shadow:0 2px 0 #fff;
+  }
+  .splash .tag {
+    font-family:"Helvetica Neue",sans-serif; font-size:10px;
+    letter-spacing:5px; color:var(--coral); margin-top:6px; font-weight:700;
+  }
+  .splash .lead {
+    font-size:13px; line-height:1.9; color:var(--sea-deep);
+    margin-top:12px; font-weight:600;
+  }
+  .period {
+    font-size:11px; letter-spacing:1px; color:var(--sea-deep);
+    background:rgba(255,255,255,0.7); padding:5px 14px; border-radius:20px;
+    margin-bottom:16px; font-weight:700;
+  }
+  .btn-start {
+    background:var(--coral); color:#fff; font-size:19px;
+    letter-spacing:5px; padding:17px 56px; border-radius:30px;
+    box-shadow:0 8px 22px rgba(238,122,82,0.55);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  .loading { color:var(--sea-deep); font-size:12px; letter-spacing:2px; margin-top:16px; min-height:18px; font-weight:700; }
+
+  /* closed screen reuse splash bg but center */
+  #closedScreen { justify-content:center; }
+  #closedScreen .title-card { margin-bottom:0; }
+</style>
+<!-- Firebase (対戦機能用) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+<div id="app">
+  <div id="pano"></div>
+  <div class="oppbar" id="oppbar">
+    <span class="me">あなた <b id="oppbarMe">0</b></span>
+    <span class="sep">—</span>
+    <span class="opp">あいて <b id="oppbarOpp">0</b></span>
+  </div>
+  <div class="wait-overlay" id="waitOverlay">
+    <div class="spin"></div>
+    <div id="waitMsg">あいての こたえを まっています…</div>
+  </div>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="jp">ぬまゲッサー</div>
+      <div class="en">NUMA-GUESSER</div>
+    </div>
+    <div class="scorebox">
+      <div class="label">合計</div>
+      <div class="val" id="totalScore">0</div>
+      <div class="round" id="roundLabel">第1巡 / 全5巡</div>
+    </div>
+  </div>
+
+  <div class="timer" id="timer" style="display:none;"><span id="timerNum">30</span><span class="timer-unit">秒</span></div>
+
+  <!-- Mini-map (PC) -->
+  <div id="guesspanel">
+    <div class="handle-row" id="handleRow">
+      <span class="handle-label" id="handleLabel">地図でこたえる</span>
+      <span class="handle-expand" id="expandIcon">⤢</span>
+    </div>
+    <div id="map"></div>
+    <div class="panel-actions">
+      <button class="btn btn-guess" id="guessBtn" disabled>ここだ！</button>
+    </div>
+  </div>
+
+  <!-- Round result -->
+  <div class="overlay" id="resultOverlay">
+    <div class="panel">
+      <div class="seal">印</div>
+      <h2 id="resultTitle">お見事</h2>
+      <div class="sub">RESULT</div>
+      <div class="resultmap" id="resultMap"></div>
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="distVal">—</div><div class="l">きょり</div></div>
+        <div class="stat"><div class="n" id="ptsVal">—</div><div class="l">獲得点</div></div>
+      </div>
+      <div class="placename" id="placeName">— 沼津市 —</div>
+      <div class="result-vs" id="resultVs"></div>
+      <button class="btn btn-guess" id="nextBtn">次の巡へ →</button>
+    </div>
+  </div>
+
+  <!-- Final -->
+  <div class="overlay" id="finalOverlay">
+    <div class="panel">
+      <div class="seal">満</div>
+      <h2>巡り 結願</h2>
+      <div class="sub">FINAL SCORE</div>
+      <div class="final-verdict" id="finalVerdict" style="display:none;"></div>
+      <div class="stat-row" style="margin:26px 0;">
+        <div class="stat"><div class="n" id="finalScore">0</div><div class="l">合計 / 50000</div></div>
+        <div class="stat"><div class="n" id="finalRank">—</div><div class="l">称号</div></div>
+      </div>
+      <div class="stat-row" id="finalVsRow" style="display:none; margin:-10px 0 18px;">
+        <div class="stat"><div class="n" id="finalOpp">0</div><div class="l">あいての合計</div></div>
+      </div>
+      <div class="tanka" id="finalTanka"></div>
+      <button class="btn btn-guess" id="restartBtn">もう一巡 ↺</button>
+    </div>
+  </div>
+
+  <!-- Splash -->
+  <div class="splash" id="splash">
+    <div class="sun"></div>
+    <div class="fuji"></div>
+    <div class="pine p1">🌲</div>
+    <div class="pine p2">🌲</div>
+    <div class="sea-band"></div>
+    <div class="wave w1"></div>
+    <div class="wave w2"></div>
+    <div class="boat">⛵</div>
+    <div class="splash-content">
+      <div class="title-card">
+        <h1>ぬまゲッサー</h1>
+        <div class="tag">GUESS WHERE IN NUMAZU</div>
+        <div class="lead">沼津のまちの どこかに とうじょう。<br>けしきを ヒントに、ばしょを あててね。</div>
+      </div>
+      <div class="period" id="periodNote"></div>
+      <button class="btn btn-start" id="startBtn">ひとりであそぶ</button>
+      <div class="mode-row">
+        <button class="mode-btn" id="createBtn">対戦をつくる</button>
+        <button class="mode-btn sub" id="joinBtn">対戦にはいる</button>
+      </div>
+      <!-- 部屋を作った人の画面 -->
+      <div class="vs-box" id="hostBox" style="display:none;">
+        <p>あいことば（友だちに伝えてね）</p>
+        <div class="room-code" id="roomCodeDisp">----</div>
+        <p>友だちがこの あいことばで「対戦にはいる」と、はじまります。</p>
+        <div class="vs-status" id="hostStatus">友だちを まっています…</div>
+      </div>
+      <!-- 部屋に入る人の画面 -->
+      <div class="vs-box" id="joinBox" style="display:none;">
+        <p>あいことばを いれてね</p>
+        <input id="roomCodeInput" maxlength="4" placeholder="____" autocomplete="off">
+        <button class="btn btn-start" id="joinGoBtn" style="margin-top:4px;">きめる</button>
+        <div class="vs-status" id="joinStatus"></div>
+      </div>
+      <div class="loading" id="loadMsg"></div>
+    </div>
+  </div>
+
+  <!-- Closed -->
+  <div class="splash hide" id="closedScreen">
+    <div class="sun"></div>
+    <div class="fuji"></div>
+    <div class="sea-band"></div>
+    <div class="wave w1"></div>
+    <div class="splash-content">
+      <div class="title-card">
+        <h1 style="font-size:26px;">公開は終了しました</h1>
+        <div class="tag">THANK YOU FOR PLAYING</div>
+        <div class="lead">たくさんの ごさんか<br>ありがとうございました。<br>また 沼津の まちで あいましょう。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  ▼▼▼ 運用設定（書き換えるのはこの2つだけ） ▼▼▼
+// ============================================================
+//  ■ 公開終了日：掲載日の2週間後に。形式 "西暦-月-日"（2桁）
+const PUBLISH_END_DATE = "2026-06-06";
+//  ■ APIキー：Google Cloud のキーを貼り付け
+const EMBEDDED_API_KEY = "AIzaSyCL4nlsFMiGZzDOgcJd-_Ioj-rFu_Uz4KQ";
+// ============================================================
+//  ▲▲▲ 設定はここまで ▲▲▲
+// ============================================================
+
+//  ■ Firebase（対戦機能用）設定
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBhrLOBwg_sLZHw3z3M0m0eRqJ41uhDARU",
+  authDomain: "numa-guesser-battle.firebaseapp.com",
+  databaseURL: "https://numa-guesser-battle-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "numa-guesser-battle",
+  storageBucket: "numa-guesser-battle.firebasestorage.app",
+  messagingSenderId: "770531128227",
+  appId: "1:770531128227:web:203628a24ad8d392796016"
+};
+
+// ===== 対戦モード用の状態 =====
+let fbDB=null;            // Firebase Realtime Database
+let isVersus=false;      // 対戦モードか
+let isHost=false;        // 部屋を作った側か
+let roomId=null;         // あいことば
+let roomRef=null;        // 部屋への参照
+let myKey="", oppKey="";  // 自分・相手のプレイヤーキー("p1"/"p2")
+let oppTotal=0;          // 相手の合計点
+let myRoundDone=false;   // この巡、自分が確定したか
+let seedRoundOrder=null; // ホストが決めた出題エリアの並び(対戦で共有)
+
+const NUMAZU = { center:{lat:35.0960, lng:138.8634} };
+// 各地区の代表地点。r = 探索半径(m)。郊外・海岸部はストリートビューが
+// 少ないため広めに設定。jit = ランダムにずらす範囲(度)。
+const NUMAZU_ANCHORS = [
+  // --- 中心市街地 ---
+  {lat:35.1009, lng:138.8634, name:"沼津駅周辺", r:400, jit:0.010},
+  {lat:35.0980, lng:138.8540, name:"あゆみ橋・狩野川沿い", r:400, jit:0.010},
+  {lat:35.1100, lng:138.8720, name:"大手町・上土町", r:400, jit:0.010},
+  {lat:35.0900, lng:138.8800, name:"三枚橋・添地町", r:500, jit:0.012},
+  {lat:35.1180, lng:138.8580, name:"高島町・五月町", r:500, jit:0.012},
+  // --- 港・千本 ---
+  {lat:35.0875, lng:138.8489, name:"沼津港・千本港町", r:400, jit:0.010},
+  {lat:35.0833, lng:138.8350, name:"千本松原", r:600, jit:0.014},
+  {lat:35.1050, lng:138.8450, name:"片浜・松長", r:600, jit:0.014},
+  // --- 北部 ---
+  {lat:35.1250, lng:138.8900, name:"岡宮・東熊堂", r:600, jit:0.014},
+  {lat:35.1400, lng:138.8650, name:"愛鷹・東椎路", r:800, jit:0.016},
+  // --- 西部平野 ---
+  {lat:35.1080, lng:138.8100, name:"原地区", r:800, jit:0.016},
+  {lat:35.1300, lng:138.8000, name:"浮島地区", r:1000, jit:0.018},
+  {lat:35.1550, lng:138.8350, name:"大平地区", r:1000, jit:0.018},
+  // --- 西浦・内浦（駿河湾岸） ---
+  {lat:35.0350, lng:138.7950, name:"内浦地区（三津・長浜）", r:1000, jit:0.012},
+  {lat:35.0150, lng:138.7850, name:"西浦地区（江梨・木負）", r:1200, jit:0.016},
+  // --- 戸田・井田（達半島・西海岸） ---
+  {lat:34.9700, lng:138.7780, name:"戸田地区", r:1200, jit:0.014},
+  {lat:34.9950, lng:138.7720, name:"井田地区", r:1200, jit:0.012},
+];
+const POINTS_PER_ROUND = 5000;
+const TANKA = [
+  "千本の 松の梢に 風わたり\n沼津の海の 青を知るかな",
+  "狩野川の 流れに沿うて 歩みゆけば\n富士は静かに 街を見守る",
+  "潮の香の 漂ふ港 行き暮れて\n灯ともる頃の 沼津恋ほし",
+  "ふるさとの 道を尋ねて 迷ふとも\nやがて辿らむ 海の方へと",
+  "見覚えの ある角曲がれば 懐かし\n沼津の町の 名を確かめむ",
+];
+
+let map, pano, geocoder, marker, apiKey="";
+let target=null, guessLatLng=null, round=0, total=0;
+let roundOrder=[]; // 各巡で使うエリアの並び（全域まんべんなく）
+const MAX_ROUNDS = 10;
+const ROUND_SECONDS = 30;
+let timerId=null, timeLeft=ROUND_SECONDS;
+
+function loadGoogle(key){
+  return new Promise((res, rej)=>{
+    window.__gmapsCb = ()=>res();
+    const s=document.createElement("script");
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=geometry&callback=__gmapsCb`;
+    s.async=true; s.onerror=()=>rej(new Error("load failed"));
+    document.head.appendChild(s);
+  });
+}
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+// 全17エリアをシャッフルし、10巡ぶんの出題エリアを作る（市全域まんべんなく）
+// 対戦時はホストが決めたインデックス配列(seed)を使い、両者で同じ出題に揃える。
+function buildRoundOrder(seed){
+  if(seed && seed.length){
+    roundOrder = seed.map(i=>NUMAZU_ANCHORS[i] || NUMAZU_ANCHORS[0]);
+    return;
+  }
+  let order=shuffle(NUMAZU_ANCHORS);
+  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(NUMAZU_ANCHORS)); }
+  roundOrder=order.slice(0,MAX_ROUNDS);
+}
+// ホストが出題エリアの並び(インデックス配列)を生成
+function makeSeedIndices(){
+  let idx=NUMAZU_ANCHORS.map((_,i)=>i);
+  let order=shuffle(idx);
+  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(idx)); }
+  return order.slice(0,MAX_ROUNDS);
+}
+// 指定エリアの周辺でストリートビューを探す。見つからなければ半径を段階的に広げる。
+function findPanoAt(sv, anchor){
+  return new Promise((resolve)=>{
+    let tries=0;
+    const baseR=anchor.r||500, jit=anchor.jit||0.012;
+    const attempt=()=>{
+      tries++;
+      const lat=anchor.lat+(Math.random()-0.5)*jit*2;
+      const lng=anchor.lng+(Math.random()-0.5)*jit*2;
+      const radius=Math.min(baseR*(1+Math.floor(tries/4)), 3000); // 4回ごとに探索範囲拡大
+      sv.getPanorama({location:{lat,lng}, radius, source:google.maps.StreetViewSource.OUTDOOR},
+        (data,status)=>{
+        if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name}); }
+        else if(tries<30){ attempt(); }
+        else {
+          // それでも無ければ屋内含めて最後の探索、なお駄目なら沼津駅へ
+          sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:3000},(d,s)=>{
+            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name});
+            else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺"}));
+          });
+        }
+      });
+    };
+    attempt();
+  });
+}
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function updateTimerUI(){
+  document.getElementById("timerNum").textContent=timeLeft;
+  document.getElementById("timer").classList.toggle("warn", timeLeft<=10);
+}
+function startTimer(){
+  stopTimer();
+  timeLeft=ROUND_SECONDS;
+  document.getElementById("timer").style.display="flex";
+  updateTimerUI();
+  timerId=setInterval(()=>{
+    timeLeft--;
+    updateTimerUI();
+    if(timeLeft<=0){ stopTimer(); onTimeUp(); }
+  },1000);
+}
+function onTimeUp(){
+  // 時間切れ：推測済みならその点、未回答なら0点で確定
+  if(guessLatLng){ submitGuess(true); }
+  else { submitGuess(true, true); }
+}
+async function startRound(){
+  round++;
+  guessLatLng=null;
+  myRoundDone=false;
+  stopTimer();
+  document.getElementById("guessBtn").disabled=true;
+  document.getElementById("roundLabel").textContent=`第${round}巡 / 全${MAX_ROUNDS}巡`;
+  document.getElementById("handleLabel").textContent="地図でこたえる";
+  if(marker){ marker.setMap(null); marker=null; }
+  closePanel();
+  hideWait();
+
+  let found;
+  if(isVersus){
+    // 対戦：両者がまったく同じ風景を見るため、ホストがpanoを決めて共有する
+    const rRef = roomRef.child("rounds/"+round);
+    if(isHost){
+      const sv=new google.maps.StreetViewService();
+      const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
+      found=await findPanoAt(sv, anchor);
+      await rRef.set({
+        panoId: found.panoId,
+        lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint
+      });
+    } else {
+      // 参加者：ホストがpanoを書き込むのを待つ
+      found = await new Promise(resolve=>{
+        rRef.on("value", snap=>{
+          const v=snap.val();
+          if(v && v.panoId){
+            rRef.off();
+            resolve({panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint});
+          }
+        });
+      });
+    }
+  } else {
+    const sv=new google.maps.StreetViewService();
+    const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
+    found=await findPanoAt(sv, anchor);
+  }
+
+  target={latLng:found.pos, hint:found.hint};
+  pano.setPano(found.panoId);
+  pano.setPov({heading:Math.random()*360, pitch:0});
+  pano.setVisible(true);
+  map.setCenter(NUMAZU.center); map.setZoom(12);
+  startTimer();
+}
+function placeGuess(latlng){
+  guessLatLng=latlng;
+  if(marker) marker.setMap(null);
+  marker=new google.maps.Marker({position:latlng, map:map,
+    icon:{path:google.maps.SymbolPath.CIRCLE, scale:9, fillColor:"#ee7a52", fillOpacity:1, strokeColor:"#fff", strokeWeight:3}});
+  document.getElementById("guessBtn").disabled=false;
+  document.getElementById("handleLabel").textContent="この場所でこたえる？";
+}
+function scoreFor(km){ return Math.min(5000, Math.round(5000*Math.exp(-km/3.0))); }
+function submitGuess(fromTimer=false, noAnswer=false){
+  if(!fromTimer && !guessLatLng) return;
+  if(timerId===null && !fromTimer) return; // 既に確定済みなら無視
+  stopTimer();
+  document.getElementById("timer").style.display="none";
+  document.getElementById("guessBtn").disabled=true;
+
+  let km, pts;
+  if(noAnswer || !guessLatLng){
+    km=null; pts=0;
+  } else {
+    km=google.maps.geometry.spherical.computeDistanceBetween(guessLatLng,target.latLng)/1000;
+    pts=scoreFor(km);
+  }
+  total+=pts;
+  document.getElementById("totalScore").textContent=total.toLocaleString();
+  if(isVersus) document.getElementById("oppbarMe").textContent=total.toLocaleString();
+  const rm=new google.maps.Map(document.getElementById("resultMap"),{center:target.latLng,zoom:13,disableDefaultUI:true,gestureHandling:"none"});
+  if(guessLatLng){
+    new google.maps.Marker({position:guessLatLng,map:rm,icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:"#ee7a52",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
+    new google.maps.Polyline({path:[guessLatLng,target.latLng],map:rm,strokeColor:"#e0b94a",strokeWeight:3,strokeOpacity:0.9});
+  }
+  new google.maps.Marker({position:target.latLng,map:rm,icon:{path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,scale:5,fillColor:"#2d6a8e",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
+  document.getElementById("distVal").textContent = (km===null) ? "—" : (km<1 ? Math.round(km*1000)+"m" : km.toFixed(2)+"km");
+  document.getElementById("ptsVal").textContent=pts;
+  document.getElementById("placeName").textContent="— "+target.hint+" 付近 —";
+  if(noAnswer || !guessLatLng){
+    document.getElementById("resultTitle").textContent="時間切れ！";
+  } else {
+    document.getElementById("resultTitle").textContent = pts>=4500?"神業！":pts>=3500?"お見事":pts>=2000?"なかなか":pts>=800?"惜しい":"また挑戦！";
+  }
+  geocoder.geocode({location:target.latLng, language:"ja"},(res,st)=>{
+    if(st==="OK"&&res[0]){
+      const c=res[0].address_components.find(x=>x.types.includes("sublocality")||x.types.includes("locality"));
+      if(c) document.getElementById("placeName").textContent="— 沼津市 "+c.long_name+" —";
+    }
+  });
+  document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の巡へ →";
+
+  if(isVersus){
+    // 自分のこの巡の得点と累計を相手に共有
+    myRoundDone=true;
+    roomRef.child("players/"+myKey).update({ total: total, round: round, ready: false });
+    updateResultVs();
+  }
+  document.getElementById("resultOverlay").classList.add("show");
+}
+function next(){
+  document.getElementById("resultOverlay").classList.remove("show");
+  if(!isVersus){
+    if(round>=MAX_ROUNDS) showFinal(); else startRound();
+    return;
+  }
+  // 対戦：自分は準備完了をマークし、相手の準備を待つ
+  roomRef.child("players/"+myKey).update({ ready:true });
+  if(round>=MAX_ROUNDS){
+    // 両者が全巡終えたら結果へ
+    showWait("あいての けっかを まっています…");
+    waitForOpponentThen(()=>{ hideWait(); showFinal(); });
+  } else {
+    showWait("あいてが すすむのを まっています…");
+    waitForOpponentThen(()=>{ hideWait(); startRound(); });
+  }
+}
+// 相手も同じ round で ready:true になるまで待ってから cb を実行
+function waitForOpponentThen(cb){
+  const oppRef=roomRef.child("players/"+oppKey);
+  oppRef.on("value", snap=>{
+    const v=snap.val()||{};
+    if(v.ready===true && (v.round||0)>=round){
+      oppRef.off();
+      cb();
+    }
+  });
+}
+function showWait(msg){ document.getElementById("waitMsg").textContent=msg||""; document.getElementById("waitOverlay").classList.add("show"); }
+function hideWait(){ document.getElementById("waitOverlay").classList.remove("show"); }
+function updateResultVs(){
+  const el=document.getElementById("resultVs");
+  if(!isVersus){ el.textContent=""; return; }
+  const diff=total-oppTotal;
+  let s;
+  if(diff>0) s=`リード中！ あなた ${total.toLocaleString()} / あいて ${oppTotal.toLocaleString()}`;
+  else if(diff<0) s=`おいかけろ！ あなた ${total.toLocaleString()} / あいて ${oppTotal.toLocaleString()}`;
+  else s=`ごかく！ あなた ${total.toLocaleString()} / あいて ${oppTotal.toLocaleString()}`;
+  el.textContent=s;
+}
+function rankFor(pct){
+  if(pct>=0.92) return "河内大杉の神";
+  if(pct>=0.84) return "水神社の龍";
+  if(pct>=0.74) return "駿河湾の主";
+  if(pct>=0.64) return "御用邸の門番";
+  if(pct>=0.54) return "あゆみ橋の達人";
+  if(pct>=0.44) return "千本松の案内人";
+  if(pct>=0.34) return "仲見世の常連";
+  if(pct>=0.24) return "リコー通りの新星";
+  if(pct>=0.14) return "沼津港の見習い";
+  return "はじめての沼津";
+}
+function showFinal(){
+  document.getElementById("finalScore").textContent=total.toLocaleString();
+  const pct=total/(POINTS_PER_ROUND*MAX_ROUNDS);
+  document.getElementById("finalRank").textContent = rankFor(pct);
+  document.getElementById("finalTanka").textContent=TANKA[Math.floor(Math.random()*TANKA.length)];
+  const verdict=document.getElementById("finalVerdict");
+  const vsRow=document.getElementById("finalVsRow");
+  if(isVersus){
+    document.getElementById("finalOpp").textContent=oppTotal.toLocaleString();
+    vsRow.style.display="flex";
+    verdict.style.display="block";
+    if(total>oppTotal){ verdict.textContent="勝ち！ 🎉"; verdict.className="final-verdict win"; }
+    else if(total<oppTotal){ verdict.textContent="惜敗…"; verdict.className="final-verdict lose"; }
+    else { verdict.textContent="引き分け"; verdict.className="final-verdict draw"; }
+    document.getElementById("restartBtn").style.display="none"; // 対戦は再戦を別途案内
+  } else {
+    verdict.style.display="none"; vsRow.style.display="none";
+    document.getElementById("restartBtn").style.display="";
+  }
+  document.getElementById("finalOverlay").classList.add("show");
+}
+function restart(){
+  total=0; round=0;
+  buildRoundOrder();
+  document.getElementById("totalScore").textContent="0";
+  document.getElementById("finalOverlay").classList.remove("show");
+  startRound();
+}
+
+// ===== panel (PC: 常設・拡大トグル) =====
+function openPanel(){ /* PC版は常時表示のため何もしない */ }
+function closePanel(){ document.getElementById("guesspanel").classList.remove("expanded"); setTimeout(()=>{ if(map) google.maps.event.trigger(map,"resize"); },350); }
+function toggleExpand(){
+  document.getElementById("guesspanel").classList.toggle("expanded");
+  setTimeout(()=>google.maps.event.trigger(map,"resize"),350);
+}
+
+// 地図APIの読み込み（共通）。読み込み済みなら即座に返す。
+let googleReady=false;
+async function ensureGoogle(){
+  if(googleReady) return true;
+  apiKey=EMBEDDED_API_KEY;
+  const msg=document.getElementById("loadMsg");
+  msg.textContent="地図を よみこみ中…";
+  try{ await loadGoogle(apiKey); }
+  catch(e){ msg.textContent="よみこみに失敗しました。少し待って再度お試しください。"; return false; }
+  geocoder=new google.maps.Geocoder();
+  pano=new google.maps.StreetViewPanorama(document.getElementById("pano"),{
+    addressControl:false, showRoadLabels:false, linksControl:true,
+    panControl:false, enableCloseButton:false, fullscreenControl:false, zoomControl:false,
+    motionTracking:false, motionTrackingControl:false
+  });
+  map=new google.maps.Map(document.getElementById("map"),{
+    center:NUMAZU.center, zoom:12, disableDefaultUI:true, clickableIcons:false,
+    gestureHandling:"greedy", styles:[{featureType:"poi",stylers:[{visibility:"off"}]}]
+  });
+  map.addListener("click", e=>placeGuess(e.latLng));
+  msg.textContent="";
+  googleReady=true;
+  return true;
+}
+
+// ひとりで遊ぶ
+async function begin(){
+  if(!await ensureGoogle()) return;
+  isVersus=false;
+  document.getElementById("oppbar").style.display="none";
+  buildRoundOrder();
+  document.getElementById("splash").classList.add("hide");
+  startRound();
+}
+
+// ===== 対戦：Firebase 初期化 =====
+function ensureFirebase(){
+  if(fbDB) return true;
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbDB=firebase.database();
+    return true;
+  }catch(e){ return false; }
+}
+function makeRoomCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 紛らわしい文字を除外
+  let s=""; for(let i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+
+// 対戦をつくる（ホスト）
+async function createRoom(){
+  hideAllBoxes();
+  document.getElementById("hostBox").style.display="block";
+  const hs=document.getElementById("hostStatus");
+  hs.textContent="準備中…";
+  if(!ensureFirebase()){ hs.textContent="つうしんの じゅんびに しっぱいしました。"; return; }
+  if(!await ensureGoogle()){ return; }
+
+  isVersus=true; isHost=true; myKey="p1"; oppKey="p2";
+  roomId=makeRoomCode();
+  roomRef=fbDB.ref("rooms/"+roomId);
+  // 出題エリアの並びを生成して部屋に保存
+  const seed=makeSeedIndices();
+  await roomRef.set({
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
+    seed: seed,
+    state: "waiting",
+    players: { p1:{ total:0, round:0, ready:false, joined:true } }
+  });
+  // この部屋は終了後に自動で消えるよう、切断時クリーンアップ
+  roomRef.onDisconnect().remove();
+  document.getElementById("roomCodeDisp").textContent=roomId;
+  hs.textContent="友だちを まっています…";
+  buildRoundOrder(seed);
+
+  // 相手の参加を待つ
+  roomRef.child("players/p2/joined").on("value", snap=>{
+    if(snap.val()===true){
+      roomRef.child("players/p2/joined").off();
+      roomRef.update({ state:"playing" });
+      listenOpponent();
+      document.getElementById("splash").classList.add("hide");
+      document.getElementById("oppbar").style.display="flex";
+      startRound();
+    }
+  });
+}
+
+// 対戦にはいる（ゲスト）
+function showJoin(){
+  hideAllBoxes();
+  document.getElementById("joinBox").style.display="block";
+  document.getElementById("roomCodeInput").focus();
+}
+async function joinRoom(){
+  const js=document.getElementById("joinStatus");
+  const code=(document.getElementById("roomCodeInput").value||"").trim().toUpperCase();
+  if(code.length!==4){ js.textContent="あいことばは 4文字です。"; return; }
+  js.textContent="さがしています…";
+  if(!ensureFirebase()){ js.textContent="つうしんの じゅんびに しっぱいしました。"; return; }
+
+  const ref=fbDB.ref("rooms/"+code);
+  const snap=await ref.get();
+  if(!snap.exists()){ js.textContent="その あいことばの 部屋が みつかりません。"; return; }
+  const data=snap.val();
+  if(data.players && data.players.p2 && data.players.p2.joined){
+    js.textContent="その部屋は すでに いっぱいです。"; return;
+  }
+  if(!await ensureGoogle()){ return; }
+
+  isVersus=true; isHost=false; myKey="p2"; oppKey="p1";
+  roomId=code; roomRef=ref;
+  buildRoundOrder(data.seed);
+  await roomRef.child("players/p2").set({ total:0, round:0, ready:false, joined:true });
+  roomRef.child("players/p2").onDisconnect().update({ joined:false });
+  listenOpponent();
+  document.getElementById("splash").classList.add("hide");
+  document.getElementById("oppbar").style.display="flex";
+  startRound();
+}
+
+// 相手のスコアを監視してバーに反映
+function listenOpponent(){
+  roomRef.child("players/"+oppKey+"/total").on("value", snap=>{
+    oppTotal = snap.val()||0;
+    document.getElementById("oppbarOpp").textContent=oppTotal.toLocaleString();
+    document.getElementById("oppbarMe").textContent=total.toLocaleString();
+    if(document.getElementById("resultOverlay").classList.contains("show")) updateResultVs();
+  });
+}
+function hideAllBoxes(){
+  document.getElementById("hostBox").style.display="none";
+  document.getElementById("joinBox").style.display="none";
+}
+
+function checkPublishPeriod(){
+  const note=document.getElementById("periodNote");
+  const end=new Date(PUBLISH_END_DATE+"T23:59:59+09:00");
+  if(isNaN(end.getTime())){ note.textContent=""; return true; }
+  if(new Date()>end){
+    document.getElementById("splash").classList.add("hide");
+    document.getElementById("closedScreen").classList.remove("hide");
+    return false;
+  }
+  note.textContent=`公開は ${end.getFullYear()}年${end.getMonth()+1}月${end.getDate()}日 まで`;
+  return true;
+}
+
+document.getElementById("startBtn").onclick=begin;
+document.getElementById("createBtn").onclick=createRoom;
+document.getElementById("joinBtn").onclick=showJoin;
+document.getElementById("joinGoBtn").onclick=joinRoom;
+document.getElementById("guessBtn").onclick=()=>submitGuess(false);
+document.getElementById("nextBtn").onclick=next;
+document.getElementById("restartBtn").onclick=restart;
+document.getElementById("handleRow").onclick=toggleExpand;
+checkPublishPeriod();
+</script>
+</body>
+</html>
