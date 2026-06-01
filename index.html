@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>ぬまゲッサー — NUMA-GUESSER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #1a2634;
@@ -23,7 +26,7 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overscroll-behavior:none; }
   body {
-    font-family:"Hiragino Maru Gothic ProN","Hiragino Mincho ProN","Yu Mincho",serif;
+    font-family:"BIZ UDPGothic","UD デジタル 教科書体 NK-R","Meiryo","メイリオ","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
     background:var(--ink); color:var(--paper);
     overflow:hidden;
   }
@@ -163,7 +166,8 @@
     position:absolute; inset:0; z-index:50;
     background:var(--fog); display:none;
     flex-direction:column; align-items:center; justify-content:center;
-    backdrop-filter:blur(4px); color:var(--ink); padding:20px;
+    backdrop-filter:blur(4px); color:var(--ink); padding:16px 20px;
+    overflow-y:auto;
   }
   .overlay.show { display:flex; animation:fade .45s ease; }
   @keyframes fade { from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
@@ -171,26 +175,37 @@
   .panel {
     background:var(--paper); border-radius:22px;
     box-shadow:0 18px 50px rgba(0,0,0,0.28);
-    padding:30px 26px 26px; max-width:440px; width:100%;
+    padding:78px 26px 26px; max-width:440px; width:100%;
     text-align:center; position:relative;
     border:1px solid rgba(224,185,74,0.35);
+    margin:auto;
   }
   .panel .seal {
-    position:absolute; top:-26px; left:50%; transform:translateX(-50%);
-    width:56px; height:56px; border-radius:50%;
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    width:50px; height:50px; border-radius:50%;
     background:var(--coral); color:#fff;
     display:flex; align-items:center; justify-content:center;
-    font-size:24px; box-shadow:0 6px 14px rgba(238,122,82,0.45);
+    font-size:21px; box-shadow:0 6px 14px rgba(238,122,82,0.45);
     border:3px solid var(--paper);
   }
-  .panel h2 { font-size:25px; letter-spacing:3px; margin:10px 0 3px; }
+  .panel h2 { font-size:25px; letter-spacing:3px; margin:0 0 3px; }
   .panel .sub { font-size:10px; color:var(--sea); letter-spacing:3px; margin-bottom:18px; }
-  .resultmap { width:100%; height:180px; border-radius:14px; overflow:hidden; margin-bottom:16px; background:#dde6ea; }
+  .resultmap { width:100%; height:min(46vh,460px); border-radius:14px; overflow:hidden; margin-bottom:14px; background:#dde6ea; }
   .stat-row { display:flex; justify-content:space-around; margin-bottom:16px; }
   .stat .n { font-size:26px; font-weight:700; font-family:"Helvetica Neue",sans-serif; color:var(--sea-deep); }
   .stat .l { font-size:10px; letter-spacing:2px; color:rgba(26,38,52,0.55); }
-  .placename { font-size:14px; letter-spacing:1px; margin-bottom:18px; color:var(--sea-deep); }
-  .tanka { font-size:13px; color:var(--sea); font-style:italic; margin-bottom:20px; line-height:2; white-space:pre-line; }
+  .placename { font-size:14px; letter-spacing:1px; margin-bottom:10px; color:var(--sea-deep); }
+  ruby rt { font-size:0.5em; color:inherit; opacity:0.85; font-weight:400; }
+  .play-hint {
+    position:absolute; left:50%; transform:translateX(-50%);
+    top:calc(var(--safe-t) + 60px); z-index:40;
+    background:rgba(26,38,52,0.86); color:var(--paper);
+    padding:10px 18px; border-radius:999px; font-size:13px; line-height:1.5;
+    max-width:84%; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,0.3);
+    opacity:0; pointer-events:none; transition:opacity .5s;
+  }
+  .play-hint.show { opacity:1; }
+  .tanka { font-size:13px; color:var(--sea); margin-bottom:20px; line-height:2; white-space:pre-line; }
 
   /* ===== Splash (cute) ===== */
   .splash {
@@ -208,7 +223,7 @@
   .splash.hide { display:none; }
   /* sun */
   .sun {
-    position:absolute; top:11%; left:50%; transform:translateX(-50%);
+    position:absolute; top:11%; left:24%; transform:translateX(-50%);
     width:90px; height:90px; border-radius:50%;
     background:radial-gradient(circle at 50% 50%, #fff3d6, #ffd98a 70%, #ffcf6e);
     box-shadow:0 0 60px 18px rgba(255,221,150,0.6);
@@ -217,15 +232,44 @@
   @keyframes floaty { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-10px)} }
   /* Mt Fuji */
   .fuji {
-    position:absolute; bottom:26%; left:50%; transform:translateX(-50%);
-    width:0; height:0; border-left:130px solid transparent;
-    border-right:130px solid transparent; border-bottom:150px solid #5a7d97;
+    position:absolute; bottom:24%; left:22%; transform:translateX(-50%);
+    width:0; height:0; border-left:120px solid transparent;
+    border-right:120px solid transparent; border-bottom:140px solid #5a7d97;
     filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12));
   }
   .fuji::after {
-    content:""; position:absolute; left:-46px; top:0; width:92px; height:46px;
+    content:""; position:absolute; left:-42px; top:0; width:84px; height:42px;
     background:#fbf7ef; clip-path:polygon(50% 0, 78% 60%, 62% 48%, 50% 70%, 38% 48%, 22% 60%);
   }
+  /* 沼津港のシンボル「びゅうお」水門（右側）。両側の塔＋上部の展望回廊。 */
+  .byuo {
+    position:absolute; right:14%; bottom:24%; width:96px; height:118px;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12)); z-index:2;
+  }
+  .byuo .tower {
+    position:absolute; bottom:0; width:20px; height:100px; background:#fbf7ef; border:1.5px solid #9bb0bd; border-radius:3px 3px 0 0;
+  }
+  .byuo .tower.l { left:8px; }
+  .byuo .tower.r { right:8px; }
+  .byuo .deck {
+    position:absolute; top:8px; left:0; right:0; height:20px;
+    background:#ffffff; border:2px solid #9bb0bd; border-radius:4px;
+  }
+  .byuo .deck::after { /* 展望回廊の窓 */
+    content:""; position:absolute; top:6px; left:10px; right:10px; height:6px;
+    background:repeating-linear-gradient(90deg,#9bb0bd 0 6px,transparent 6px 11px);
+  }
+  .byuo .gate { /* 水門の扉体 */
+    position:absolute; bottom:0; left:8px; right:8px; height:34px;
+    background:#f3f1ec; border:2px solid #9bb0bd; border-bottom:none;
+  }
+  /* 港の街並みシルエット（びゅうおの足元） */
+  .town {
+    position:absolute; right:2%; bottom:27%; display:flex; align-items:flex-end; gap:3px; z-index:1; opacity:.92;
+  }
+  .town span { display:block; width:14px; background:#6c8597; border-radius:2px 2px 0 0; }
+  .town .b1{height:26px;} .town .b2{height:38px;} .town .b3{height:20px;}
+  .town .b4{height:32px;width:18px;} .town .b5{height:16px;}
   /* sea */
   .sea-band {
     position:absolute; bottom:0; left:0; right:0; height:30%;
@@ -244,7 +288,7 @@
   @keyframes sail { 0%{left:-12%} 100%{left:108%} }
   /* pine */
   .pine { position:absolute; bottom:27%; font-size:34px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.15)); }
-  .pine.p1 { left:10%; } .pine.p2 { right:12%; font-size:28px; }
+  .pine.p1 { left:10%; } .pine.p2 { right:2%; font-size:24px; bottom:24%; }
 
   .splash-content {
     position:relative; z-index:5; width:100%;
@@ -258,8 +302,9 @@
     border:2px solid #fff; margin-bottom:22px;
   }
   .splash h1 {
-    font-size:40px; letter-spacing:3px; color:var(--sea-deep);
-    font-weight:800; text-shadow:0 2px 0 #fff;
+    font-family:"BIZ UDPGothic","UD デジタル 教科書体 NK-B","Meiryo","メイリオ","Yu Gothic",sans-serif;
+    font-size:36px; letter-spacing:2px; color:var(--sea-deep);
+    font-weight:700; text-shadow:0 2px 0 #fff;
   }
   .splash .tag {
     font-family:"Helvetica Neue",sans-serif; font-size:10px;
@@ -303,6 +348,9 @@
     <div class="spin"></div>
     <div id="waitMsg">あいての こたえを まっています…</div>
   </div>
+  <div class="play-hint" id="playHint">
+    <span>けしきは 指で ぐるぐる まわせるよ。地図を タップして、ばしょを きめてね。</span>
+  </div>
 
   <div class="topbar">
     <div class="brand">
@@ -312,7 +360,7 @@
     <div class="scorebox">
       <div class="label">合計</div>
       <div class="val" id="totalScore">0</div>
-      <div class="round" id="roundLabel">第1巡 / 全5巡</div>
+      <div class="round" id="roundLabel">第1問 / 全10問</div>
     </div>
   </div>
 
@@ -333,36 +381,36 @@
   <!-- Round result -->
   <div class="overlay" id="resultOverlay">
     <div class="panel">
-      <div class="seal">印</div>
+      <div class="seal">答</div>
       <h2 id="resultTitle">お見事</h2>
       <div class="sub">RESULT</div>
       <div class="resultmap" id="resultMap"></div>
       <div class="stat-row">
         <div class="stat"><div class="n" id="distVal">—</div><div class="l">きょり</div></div>
-        <div class="stat"><div class="n" id="ptsVal">—</div><div class="l">獲得点</div></div>
+        <div class="stat"><div class="n" id="ptsVal">—</div><div class="l"><ruby>獲得点<rt>かくとくてん</rt></ruby></div></div>
       </div>
       <div class="placename" id="placeName">— 沼津市 —</div>
       <div class="result-vs" id="resultVs"></div>
-      <button class="btn btn-guess" id="nextBtn">次の巡へ →</button>
+      <button class="btn btn-guess" id="nextBtn">次の問題へ →</button>
     </div>
   </div>
 
   <!-- Final -->
   <div class="overlay" id="finalOverlay">
     <div class="panel">
-      <div class="seal">満</div>
-      <h2>巡り 結願</h2>
-      <div class="sub">FINAL SCORE</div>
+      <div class="seal">祝</div>
+      <h2>終了！ <ruby>結果<rt>けっか</rt></ruby></h2>
+      <div class="sub" style="margin-top:-2px;">おつかれさま！</div>
       <div class="final-verdict" id="finalVerdict" style="display:none;"></div>
       <div class="stat-row" style="margin:26px 0;">
         <div class="stat"><div class="n" id="finalScore">0</div><div class="l">合計 / 50000</div></div>
-        <div class="stat"><div class="n" id="finalRank">—</div><div class="l">称号</div></div>
+        <div class="stat"><div class="n" id="finalRank">—</div><div class="l"><ruby>称号<rt>しょうごう</rt></ruby></div></div>
       </div>
       <div class="stat-row" id="finalVsRow" style="display:none; margin:-10px 0 18px;">
         <div class="stat"><div class="n" id="finalOpp">0</div><div class="l">あいての合計</div></div>
       </div>
       <div class="tanka" id="finalTanka"></div>
-      <button class="btn btn-guess" id="restartBtn">もう一巡 ↺</button>
+      <button class="btn btn-guess" id="restartBtn">もう一回 ↺</button>
     </div>
   </div>
 
@@ -370,6 +418,13 @@
   <div class="splash" id="splash">
     <div class="sun"></div>
     <div class="fuji"></div>
+    <div class="town"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="b5"></span></div>
+    <div class="byuo">
+      <div class="tower l"></div>
+      <div class="tower r"></div>
+      <div class="gate"></div>
+      <div class="deck"></div>
+    </div>
     <div class="pine p1">🌲</div>
     <div class="pine p2">🌲</div>
     <div class="sea-band"></div>
@@ -461,28 +516,28 @@ const NUMAZU = { center:{lat:35.0960, lng:138.8634} };
 // 少ないため広めに設定。jit = ランダムにずらす範囲(度)。
 const NUMAZU_ANCHORS = [
   // --- 中心市街地 ---
-  {lat:35.1009, lng:138.8634, name:"沼津駅周辺", r:400, jit:0.010},
-  {lat:35.0980, lng:138.8540, name:"あゆみ橋・狩野川沿い", r:400, jit:0.010},
-  {lat:35.1100, lng:138.8720, name:"大手町・上土町", r:400, jit:0.010},
-  {lat:35.0900, lng:138.8800, name:"三枚橋・添地町", r:500, jit:0.012},
-  {lat:35.1180, lng:138.8580, name:"高島町・五月町", r:500, jit:0.012},
+  {lat:35.1009, lng:138.8634, name:"沼津駅周辺", yomi:"ぬまづえき しゅうへん", r:400, jit:0.010},
+  {lat:35.0980, lng:138.8540, name:"あゆみ橋・狩野川沿い", yomi:"あゆみばし・かのがわ ぞい", r:400, jit:0.010},
+  {lat:35.1100, lng:138.8720, name:"大手町・上土町", yomi:"おおてまち・あげつちちょう", r:400, jit:0.010},
+  {lat:35.0900, lng:138.8800, name:"三枚橋・添地町", yomi:"さんまいばし・そえちちょう", r:500, jit:0.012},
+  {lat:35.1180, lng:138.8580, name:"高島町・五月町", yomi:"たかしまちょう・さつきちょう", r:500, jit:0.012},
   // --- 港・千本 ---
-  {lat:35.0875, lng:138.8489, name:"沼津港・千本港町", r:400, jit:0.010},
-  {lat:35.0833, lng:138.8350, name:"千本松原", r:600, jit:0.014},
-  {lat:35.1050, lng:138.8450, name:"片浜・松長", r:600, jit:0.014},
+  {lat:35.0875, lng:138.8489, name:"沼津港・千本港町", yomi:"ぬまづこう・せんぼんみなとちょう", r:400, jit:0.010},
+  {lat:35.0833, lng:138.8350, name:"千本松原", yomi:"せんぼんまつばら", r:600, jit:0.014},
+  {lat:35.1050, lng:138.8450, name:"片浜・松長", yomi:"かたはま・まつなが", r:600, jit:0.014},
   // --- 北部 ---
-  {lat:35.1250, lng:138.8900, name:"岡宮・東熊堂", r:600, jit:0.014},
-  {lat:35.1400, lng:138.8650, name:"愛鷹・東椎路", r:800, jit:0.016},
+  {lat:35.1250, lng:138.8900, name:"岡宮・東熊堂", yomi:"おかみや・ひがしくまんどう", r:600, jit:0.014},
+  {lat:35.1400, lng:138.8650, name:"愛鷹・東椎路", yomi:"あしたか・ひがししいじ", r:800, jit:0.016},
   // --- 西部平野 ---
-  {lat:35.1080, lng:138.8100, name:"原地区", r:800, jit:0.016},
-  {lat:35.1300, lng:138.8000, name:"浮島地区", r:1000, jit:0.018},
-  {lat:35.1550, lng:138.8350, name:"大平地区", r:1000, jit:0.018},
+  {lat:35.1080, lng:138.8100, name:"原地区", yomi:"はら ちく", r:800, jit:0.016},
+  {lat:35.1300, lng:138.8000, name:"浮島地区", yomi:"うきしま ちく", r:1000, jit:0.018},
+  {lat:35.1550, lng:138.8350, name:"大平地区", yomi:"おおひら ちく", r:1000, jit:0.018},
   // --- 西浦・内浦（駿河湾岸） ---
-  {lat:35.0350, lng:138.7950, name:"内浦地区（三津・長浜）", r:1000, jit:0.012},
-  {lat:35.0150, lng:138.7850, name:"西浦地区（江梨・木負）", r:1200, jit:0.016},
-  // --- 戸田・井田（達半島・西海岸） ---
-  {lat:34.9700, lng:138.7780, name:"戸田地区", r:1200, jit:0.014},
-  {lat:34.9950, lng:138.7720, name:"井田地区", r:1200, jit:0.012},
+  {lat:35.0350, lng:138.7950, name:"内浦地区（三津・長浜）", yomi:"うちうら ちく（みと・ながはま）", r:1000, jit:0.012},
+  {lat:35.0150, lng:138.7850, name:"西浦地区（江梨・木負）", yomi:"にしうら ちく（えなし・きしょう）", r:1200, jit:0.016},
+  // --- 戸田・井田（達磨半島・西海岸） ---
+  {lat:34.9700, lng:138.7780, name:"戸田地区", yomi:"へだ ちく", r:1200, jit:0.014},
+  {lat:34.9950, lng:138.7720, name:"井田地区", yomi:"いた ちく", r:1200, jit:0.012},
 ];
 const POINTS_PER_ROUND = 5000;
 const TANKA = [
@@ -544,13 +599,13 @@ function findPanoAt(sv, anchor){
       const radius=Math.min(baseR*(1+Math.floor(tries/4)), 3000); // 4回ごとに探索範囲拡大
       sv.getPanorama({location:{lat,lng}, radius, source:google.maps.StreetViewSource.OUTDOOR},
         (data,status)=>{
-        if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name}); }
+        if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name,yomi:anchor.yomi}); }
         else if(tries<30){ attempt(); }
         else {
           // それでも無ければ屋内含めて最後の探索、なお駄目なら沼津駅へ
           sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:3000},(d,s)=>{
-            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name});
-            else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺"}));
+            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi});
+            else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺",yomi:"ぬまづえき しゅうへん"}));
           });
         }
       });
@@ -585,7 +640,7 @@ async function startRound(){
   myRoundDone=false;
   stopTimer();
   document.getElementById("guessBtn").disabled=true;
-  document.getElementById("roundLabel").textContent=`第${round}巡 / 全${MAX_ROUNDS}巡`;
+  document.getElementById("roundLabel").innerHTML=`第${round}問 / 全${MAX_ROUNDS}問`;
   document.getElementById("handleLabel").textContent="地図でこたえる";
   if(marker){ marker.setMap(null); marker=null; }
   closePanel();
@@ -601,7 +656,7 @@ async function startRound(){
       found=await findPanoAt(sv, anchor);
       await rRef.set({
         panoId: found.panoId,
-        lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint
+        lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint, yomi: found.yomi||""
       });
     } else {
       // 参加者：ホストがpanoを書き込むのを待つ
@@ -610,7 +665,7 @@ async function startRound(){
           const v=snap.val();
           if(v && v.panoId){
             rRef.off();
-            resolve({panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint});
+            resolve({panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||""});
           }
         });
       });
@@ -621,11 +676,16 @@ async function startRound(){
     found=await findPanoAt(sv, anchor);
   }
 
-  target={latLng:found.pos, hint:found.hint};
+  target={latLng:found.pos, hint:found.hint, yomi:found.yomi};
   pano.setPano(found.panoId);
   pano.setPov({heading:Math.random()*360, pitch:0});
   pano.setVisible(true);
   map.setCenter(NUMAZU.center); map.setZoom(12);
+  if(round===1){
+    const h=document.getElementById("playHint");
+    h.classList.add("show");
+    setTimeout(()=>h.classList.remove("show"), 6500);
+  }
   startTimer();
 }
 function placeGuess(latlng){
@@ -660,9 +720,21 @@ function submitGuess(fromTimer=false, noAnswer=false){
     new google.maps.Polyline({path:[guessLatLng,target.latLng],map:rm,strokeColor:"#e0b94a",strokeWeight:3,strokeOpacity:0.9});
   }
   new google.maps.Marker({position:target.latLng,map:rm,icon:{path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,scale:5,fillColor:"#2d6a8e",fillOpacity:1,strokeColor:"#fff",strokeWeight:2}});
+  // 自分の答えと正解が必ず1画面に収まるよう範囲を合わせる
+  if(guessLatLng){
+    const bounds=new google.maps.LatLngBounds();
+    bounds.extend(guessLatLng); bounds.extend(target.latLng);
+    google.maps.event.addListenerOnce(rm,"idle",()=>{
+      rm.fitBounds(bounds, {top:60,bottom:60,left:60,right:60});
+      const z=rm.getZoom(); if(z>16) rm.setZoom(16);
+    });
+    setTimeout(()=>{ google.maps.event.trigger(rm,"resize"); rm.fitBounds(bounds,{top:60,bottom:60,left:60,right:60}); if(rm.getZoom()>16) rm.setZoom(16); },250);
+  } else {
+    setTimeout(()=>{ google.maps.event.trigger(rm,"resize"); rm.setCenter(target.latLng); rm.setZoom(14); },250);
+  }
   document.getElementById("distVal").textContent = (km===null) ? "—" : (km<1 ? Math.round(km*1000)+"m" : km.toFixed(2)+"km");
   document.getElementById("ptsVal").textContent=pts;
-  document.getElementById("placeName").textContent="— "+target.hint+" 付近 —";
+  setPlaceName(target.hint, target.yomi);
   if(noAnswer || !guessLatLng){
     document.getElementById("resultTitle").textContent="時間切れ！";
   } else {
@@ -671,10 +743,10 @@ function submitGuess(fromTimer=false, noAnswer=false){
   geocoder.geocode({location:target.latLng, language:"ja"},(res,st)=>{
     if(st==="OK"&&res[0]){
       const c=res[0].address_components.find(x=>x.types.includes("sublocality")||x.types.includes("locality"));
-      if(c) document.getElementById("placeName").textContent="— 沼津市 "+c.long_name+" —";
+      if(c) setPlaceName("沼津市 "+c.long_name, target.yomi);
     }
   });
-  document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の巡へ →";
+  document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の問題へ →";
 
   if(isVersus){
     // 自分のこの巡の得点と累計を相手に共有
@@ -725,21 +797,32 @@ function updateResultVs(){
   el.textContent=s;
 }
 function rankFor(pct){
-  if(pct>=0.92) return "河内大杉の神";
-  if(pct>=0.84) return "水神社の龍";
-  if(pct>=0.74) return "駿河湾の主";
-  if(pct>=0.64) return "御用邸の門番";
-  if(pct>=0.54) return "あゆみ橋の達人";
-  if(pct>=0.44) return "千本松の案内人";
-  if(pct>=0.34) return "仲見世の常連";
-  if(pct>=0.24) return "リコー通りの新星";
-  if(pct>=0.14) return "沼津港の見習い";
-  return "はじめての沼津";
+  if(pct>=0.92) return {name:"河内大杉の神", yomi:"こうちおおすぎ の かみ"};
+  if(pct>=0.84) return {name:"水神社の龍", yomi:"すいじんじゃ の りゅう"};
+  if(pct>=0.74) return {name:"駿河湾の主", yomi:"するがわん の ぬし"};
+  if(pct>=0.64) return {name:"御用邸の門番", yomi:"ごようてい の もんばん"};
+  if(pct>=0.54) return {name:"あゆみ橋の達人", yomi:"あゆみばし の たつじん"};
+  if(pct>=0.44) return {name:"千本松の案内人", yomi:"せんぼんまつ の あんないにん"};
+  if(pct>=0.34) return {name:"仲見世の常連", yomi:"なかみせ の じょうれん"};
+  if(pct>=0.24) return {name:"リコー通りの新星", yomi:"リコーどおり の しんせい"};
+  if(pct>=0.14) return {name:"沼津港の見習い", yomi:"ぬまづこう の みならい"};
+  return {name:"はじめての沼津", yomi:"はじめて の ぬまづ"};
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function rankRuby(pct){
+  const r=rankFor(pct);
+  return '<ruby>'+escapeHtml(r.name)+'<rt>'+escapeHtml(r.yomi)+'</rt></ruby>';
+}
+// 地名にふりがなを添えて結果画面に表示（ルビ）
+function setPlaceName(name, yomi){
+  const el=document.getElementById("placeName");
+  if(yomi){ el.innerHTML = '— <ruby>'+escapeHtml(name)+'<rt>'+escapeHtml(yomi)+'</rt></ruby> 付近 —'; }
+  else { el.textContent = "— "+name+" 付近 —"; }
 }
 function showFinal(){
   document.getElementById("finalScore").textContent=total.toLocaleString();
   const pct=total/(POINTS_PER_ROUND*MAX_ROUNDS);
-  document.getElementById("finalRank").textContent = rankFor(pct);
+  document.getElementById("finalRank").innerHTML = rankRuby(pct);
   document.getElementById("finalTanka").textContent=TANKA[Math.floor(Math.random()*TANKA.length)];
   const verdict=document.getElementById("finalVerdict");
   const vsRow=document.getElementById("finalVsRow");
