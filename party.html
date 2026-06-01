@@ -174,7 +174,7 @@
     position:absolute; inset:0; z-index:50;
     background:var(--fog); display:none;
     flex-direction:column; align-items:center; justify-content:center;
-    backdrop-filter:blur(4px); color:var(--ink); padding:20px;
+    backdrop-filter:blur(4px); color:var(--ink); padding:36px 20px 20px;
     overflow-y:auto;
   }
   .overlay.show { display:flex; animation:fade .45s ease; }
@@ -393,7 +393,7 @@
   <!-- Round result -->
   <div class="overlay" id="resultOverlay">
     <div class="panel">
-      <div class="seal">点</div>
+      <div class="seal">答</div>
       <h2 id="resultTitle">お見事</h2>
       <div class="sub">RESULT</div>
       <div class="resultmap" id="resultMap"></div>
