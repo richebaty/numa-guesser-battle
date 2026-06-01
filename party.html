@@ -537,7 +537,7 @@ const FIREBASE_CONFIG = {
 
 // ===== 対戦モード用の状態（最大8人・待合室つき） =====
 const MAX_PLAYERS = 8;
-const SYNC_TIMEOUT_MS = 30000; // 誰かが抜けても、この時間で次へ進む保険
+const SYNC_TIMEOUT_MS = 15000; // 誰かが止まっても、この時間で次へ進む保険
 let fbDB=null;            // Firebase Realtime Database
 let isVersus=false;      // 対戦モードか
 let isHost=false;        // 待合室を作った主催者か
@@ -801,27 +801,46 @@ function next(){
     if(round>=MAX_ROUNDS) showFinal(); else startRound();
     return;
   }
-  // 対戦：自分は準備完了をマークし、全員の準備を待つ（抜けた人がいても保険で進む）
+  // 対戦：自分は準備完了をマークし、全員の準備を待つ（止まった人がいても保険で進む）
   roomRef.child("players/"+myId).update({ ready:true });
   const goNext = round>=MAX_ROUNDS;
-  showWait(goNext ? "みんなの けっかを まっています…" : "みんなが すすむのを まっています…");
   waitForEveryoneThen(()=>{ hideWait(); if(goNext) showFinal(); else startRound(); });
 }
-// 生きている全員が同じ round で ready:true になるまで待つ。
-// SYNC_TIMEOUT_MS を過ぎたら、抜けた人を待たずに先へ進む保険つき。
+// 生きている全員が同じ round を終えるまで待つ。
+// SYNC_TIMEOUT_MS を過ぎたら、止まっている人を待たずに先へ進む保険つき。
+let waitHandler=null;       // 現在の待ち受けリスナー
 function waitForEveryoneThen(cb){
+  // 念のため、前の待ち受けが残っていたら必ず外す（リスナーの重複を防ぐ）
+  if(waitHandler){ try{ roomRef.child("players").off("value", waitHandler); }catch(e){} waitHandler=null; }
+  if(syncTimer){ clearTimeout(syncTimer); syncTimer=null; }
+
   let done=false;
-  const finish=()=>{ if(done) return; done=true; roomRef.child("players").off("value", handler); if(syncTimer){clearTimeout(syncTimer);syncTimer=null;} cb(); };
-  const handler=roomRef.child("players").on("value", snap=>{
-    const ps=snap.val()||{};
-    const alive=Object.values(ps).filter(p=>p && p.alive!==false);
-    if(alive.length===0) return;
-    // この巡を終えた人 = ready:true かつ round>=現在巡、または既に次の巡へ進んだ人
-    const allReady=alive.every(p=> (p.round||0)>round || (p.ready===true && (p.round||0)>=round) );
-    if(allReady) finish();
+  let countTimer=null;
+  const finish=()=>{
+    if(done) return; done=true;
+    if(waitHandler){ try{ roomRef.child("players").off("value", waitHandler); }catch(e){} waitHandler=null; }
+    if(syncTimer){ clearTimeout(syncTimer); syncTimer=null; }
+    if(countTimer){ clearInterval(countTimer); countTimer=null; }
+    cb();
+  };
+  const check=(ps)=>{
+    const alive=Object.values(ps||{}).filter(p=>p && p.alive!==false);
+    if(alive.length===0) return false;
+    // この巡を終えた人 = 既に次の巡へ進んだ、または ready:true かつ round>=現在巡
+    return alive.every(p=> (p.round||0)>round || (p.ready===true && (p.round||0)>=round) );
+  };
+  waitHandler = roomRef.child("players").on("value", snap=>{
+    playersCache = snap.val() || playersCache;
+    if(check(snap.val())) finish();
   });
-  // 保険：一定時間で強制的に次へ
-  if(syncTimer) clearTimeout(syncTimer);
+  // 保険：一定時間で強制的に次へ（残り秒数も表示）
+  let remain=Math.ceil(SYNC_TIMEOUT_MS/1000);
+  showWait("みんなを まっています…（あと "+remain+"秒）");
+  countTimer=setInterval(()=>{
+    remain--;
+    if(remain>0) showWait("みんなを まっています…（あと "+remain+"秒）");
+    else showWait("つぎへ すすみます…");
+  },1000);
   syncTimer=setTimeout(finish, SYNC_TIMEOUT_MS);
 }
 function showWait(msg){ document.getElementById("waitMsg").textContent=msg||""; document.getElementById("waitOverlay").classList.add("show"); }
