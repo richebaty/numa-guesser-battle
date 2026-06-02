@@ -81,6 +81,9 @@
   .final-verdict.win  { color:var(--coral); }
   .final-verdict.lose { color:var(--sea); }
   .final-verdict.draw { color:var(--gold); }
+  .best-row { font-size:15px; color:var(--sea-deep); margin:-6px 0 14px; font-weight:bold; }
+  .best-row.newbest { color:var(--coral); }
+  .best-row .badge { display:inline-block; background:var(--coral); color:#fff; border-radius:999px; padding:2px 10px; font-size:12px; margin-left:6px; }
   /* 待合室・順位表 */
   .lobby-code-wrap { margin:10px 0 14px; }
   .lobby-count { font-size:14px; font-weight:bold; color:var(--sea-deep); margin:6px 0; }
@@ -372,7 +375,7 @@
     <div class="scorebox">
       <div class="label">合計</div>
       <div class="val" id="totalScore">0</div>
-      <div class="round" id="roundLabel">第1問 / 全10問</div>
+      <div class="round" id="roundLabel">第1問 / 全5問</div>
     </div>
   </div>
 
@@ -415,13 +418,16 @@
       <div class="sub" style="margin-top:-2px;">おつかれさま！</div>
       <div class="final-verdict" id="finalVerdict" style="display:none;"></div>
       <div class="stat-row" style="margin:26px 0;">
-        <div class="stat"><div class="n" id="finalScore">0</div><div class="l">合計 / 50000</div></div>
+        <div class="stat"><div class="n" id="finalScore">0</div><div class="l">合計 / 25000</div></div>
         <div class="stat"><div class="n" id="finalRank">—</div><div class="l"><ruby>称号<rt>しょうごう</rt></ruby></div></div>
       </div>
       <div class="stat-row" id="finalVsRow" style="display:none; margin:-10px 0 18px;">
         <div class="stat"><div class="n" id="finalOpp">0</div><div class="l">あいての合計</div></div>
       </div>
       <div class="final-board" id="finalBoard" style="display:none;"></div>
+      <div class="best-row" id="bestRow" style="display:none;">
+        <span id="bestText"></span>
+      </div>
       <div class="tanka" id="finalTanka"></div>
       <button class="btn btn-guess" id="restartBtn">もう一回 ↺</button>
     </div>
@@ -589,7 +595,7 @@ const TANKA = [
 let map, pano, geocoder, marker, apiKey="";
 let target=null, guessLatLng=null, round=0, total=0;
 let roundOrder=[]; // 各巡で使うエリアの並び（全域まんべんなく）
-const MAX_ROUNDS = 10;
+const MAX_ROUNDS = 5;
 const ROUND_SECONDS = 30;
 let timerId=null, timeLeft=ROUND_SECONDS;
 
@@ -915,12 +921,34 @@ function showFinal(){
         return `<div${mine}>${medal} ${escapeHtml(p.name)} … ${p.total.toLocaleString()}点</div>`;
       }).join("");
     document.getElementById("restartBtn").style.display="none";
+    const br=document.getElementById("bestRow"); if(br) br.style.display="none";
   } else {
     verdict.style.display="none"; vsRow.style.display="none";
     document.getElementById("finalBoard").style.display="none";
     document.getElementById("restartBtn").style.display="";
+    showBestScore();
   }
   document.getElementById("finalOverlay").classList.add("show");
+}
+// 一人用：その端末の自己ベストを記録・表示（保存できない環境では静かに非表示）
+function showBestScore(){
+  const bestRow=document.getElementById("bestRow");
+  const bestText=document.getElementById("bestText");
+  if(!bestRow||!bestText) return;
+  let prev=0, isNew=false;
+  try{
+    prev=parseInt(localStorage.getItem("numaguesser_best")||"0",10)||0;
+    if(total>prev){ localStorage.setItem("numaguesser_best", String(total)); isNew=true; }
+  }catch(e){ bestRow.style.display="none"; return; }
+  const best=Math.max(prev,total);
+  if(isNew){
+    bestRow.className="best-row newbest";
+    bestText.innerHTML="自己ベスト こうしん！ "+total.toLocaleString()+"点 <span class=\"badge\">NEW</span>";
+  } else {
+    bestRow.className="best-row";
+    bestText.textContent="自己ベスト "+best.toLocaleString()+"点";
+  }
+  bestRow.style.display="block";
 }
 function restart(){
   total=0; round=0;
