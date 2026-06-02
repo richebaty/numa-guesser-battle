@@ -202,6 +202,11 @@
   .panel h2 { font-size:25px; letter-spacing:3px; margin:0 0 3px; }
   .panel .sub { font-size:10px; color:var(--sea); letter-spacing:3px; margin-bottom:18px; }
   .resultmap { width:100%; height:min(46vh,460px); border-radius:14px; overflow:hidden; margin-bottom:14px; background:#dde6ea; }
+  .review-q { margin:0 0 20px; }
+  .review-q h3 { font-size:16px; color:var(--sea-deep); margin:0 0 6px; text-align:left; }
+  .review-q .qmap { width:100%; height:230px; border-radius:12px; overflow:hidden; background:#dde6ea; }
+  .review-legend { font-size:12px; color:var(--ink); text-align:left; margin:6px 2px 0; line-height:1.7; }
+  .review-legend .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin:0 4px 0 10px; vertical-align:middle; }
   .stat-row { display:flex; justify-content:space-around; margin-bottom:16px; }
   .stat .n { font-size:26px; font-weight:700; font-family:"Helvetica Neue",sans-serif; color:var(--sea-deep); }
   .stat .l { font-size:10px; letter-spacing:2px; color:rgba(26,38,52,0.55); }
@@ -429,7 +434,18 @@
         <span id="bestText"></span>
       </div>
       <div class="tanka" id="finalTanka"></div>
+      <button class="btn btn-guess" id="reviewBtn" style="display:none; margin-bottom:10px;">ふりかえりを見る 🗺️</button>
       <button class="btn btn-guess" id="restartBtn">もう一回 ↺</button>
+    </div>
+  </div>
+
+  <!-- ふりかえり（対戦のあと：全5問の正解とみんなの回答地点） -->
+  <div class="overlay" id="reviewOverlay">
+    <div class="panel" style="max-width:480px;">
+      <h2>ふりかえり</h2>
+      <div class="sub" style="margin-top:-2px;">せいかいと みんなの こたえ</div>
+      <div id="reviewList" style="margin-top:14px;"></div>
+      <button class="btn btn-guess" id="reviewCloseBtn" style="margin-top:6px;">結果に もどる ↩</button>
     </div>
   </div>
 
@@ -896,6 +912,7 @@ function showFinal(){
     vsRow.style.display="none";
     verdict.style.display="block";
     document.getElementById("restartBtn").style.display="none";
+    const rb=document.getElementById("reviewBtn"); if(rb) rb.style.display="";
     const br=document.getElementById("bestRow"); if(br) br.style.display="none";
     finalShowing=true;
     renderFinalBoard();   // 順位表は listenScores からも随時更新される
@@ -903,6 +920,7 @@ function showFinal(){
     verdict.style.display="none"; vsRow.style.display="none";
     document.getElementById("finalBoard").style.display="none";
     document.getElementById("restartBtn").style.display="";
+    const rb=document.getElementById("reviewBtn"); if(rb) rb.style.display="none";
     showBestScore();
   }
   document.getElementById("finalOverlay").classList.add("show");
@@ -957,6 +975,64 @@ function showBestScore(){
     bestText.textContent="自己ベスト "+best.toLocaleString()+"点";
   }
   bestRow.style.display="block";
+}
+// ===== ふりかえり：全5問の正解とみんなの回答地点を地図で表示 =====
+const REVIEW_COLORS = ["#2d8e6a","#8e5a2d","#6a2d8e","#2d6a8e","#8e2d5a","#5a8e2d","#2d2d8e"];
+function showReview(){
+  document.getElementById("finalOverlay").classList.remove("show");
+  const list=document.getElementById("reviewList");
+  list.innerHTML="";
+  const players=Object.entries(playersCache||{}).filter(([id,p])=>p && p.alive!==false);
+  // 各問ぶんの枠を先に作る
+  for(let r=1;r<=MAX_ROUNDS;r++){
+    const wrap=document.createElement("div");
+    wrap.className="review-q";
+    const correct = sharedPanos && sharedPanos[r-1];
+    const hintTxt = correct ? (correct.hint||"") : "";
+    wrap.innerHTML = `<h3>第${r}問：${escapeHtml(hintTxt)} 付近</h3><div class="qmap" id="qmap${r}"></div><div class="review-legend" id="qleg${r}"></div>`;
+    list.appendChild(wrap);
+  }
+  document.getElementById("reviewOverlay").classList.add("show");
+  // 地図を順に描く
+  for(let r=1;r<=MAX_ROUNDS;r++){
+    const correct = sharedPanos && sharedPanos[r-1];
+    if(!correct) continue;
+    const center={lat:correct.lat, lng:correct.lng};
+    const m=new google.maps.Map(document.getElementById("qmap"+r),{center:center,zoom:13,disableDefaultUI:true,gestureHandling:"none"});
+    const bounds=new google.maps.LatLngBounds();
+    // 正解（青い旗マーカー）
+    const correctPos=new google.maps.LatLng(correct.lat,correct.lng);
+    new google.maps.Marker({position:correctPos,map:m,
+      icon:{path:google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,scale:6,fillColor:"#2d6a8e",fillOpacity:1,strokeColor:"#fff",strokeWeight:2},
+      zIndex:999, title:"正解"});
+    bounds.extend(correctPos);
+    // 各プレイヤーの回答地点
+    let legend=`<span><span class="dot" style="background:#2d6a8e;"></span>正解</span>`;
+    players.forEach(([id,p],idx)=>{
+      const g = p.guesses && p.guesses[r];
+      if(!g || g.lat==null || g.lng==null) return;
+      const isMe = id===myId;
+      const color = isMe ? "#ee7a52" : REVIEW_COLORS[idx % REVIEW_COLORS.length];
+      const pos=new google.maps.LatLng(g.lat,g.lng);
+      new google.maps.Marker({position:pos,map:m,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:isMe?8:6,fillColor:color,fillOpacity:1,strokeColor:"#fff",strokeWeight:2},
+        zIndex:isMe?500:100, title:(p.name||"")});
+      new google.maps.Polyline({path:[pos,correctPos],map:m,strokeColor:color,strokeWeight:2,strokeOpacity:0.6});
+      bounds.extend(pos);
+      const nm = escapeHtml(p.name||"プレイヤー") + (isMe?"（あなた）":"");
+      legend += `<span><span class="dot" style="background:${color};"></span>${nm}</span>`;
+    });
+    document.getElementById("qleg"+r).innerHTML=legend;
+    // 全員と正解が収まるよう範囲を合わせる
+    (function(map,bnds){
+      google.maps.event.addListenerOnce(map,"idle",()=>{ map.fitBounds(bnds,{top:30,bottom:30,left:30,right:30}); if(map.getZoom()>16) map.setZoom(16); });
+      setTimeout(()=>{ google.maps.event.trigger(map,"resize"); map.fitBounds(bnds,{top:30,bottom:30,left:30,right:30}); if(map.getZoom()>16) map.setZoom(16); },300);
+    })(m,bounds);
+  }
+}
+function closeReview(){
+  document.getElementById("reviewOverlay").classList.remove("show");
+  document.getElementById("finalOverlay").classList.add("show");
 }
 function restart(){
   total=0; round=0;
@@ -1190,6 +1266,8 @@ document.getElementById("lobbyStartBtn").onclick=lobbyStart;
 document.getElementById("guessBtn").onclick=()=>submitGuess(false);
 document.getElementById("nextBtn").onclick=next;
 document.getElementById("restartBtn").onclick=restart;
+document.getElementById("reviewBtn").onclick=showReview;
+document.getElementById("reviewCloseBtn").onclick=closeReview;
 document.getElementById("handleRow").onclick=toggleExpand;
 checkPublishPeriod();
 </script>
