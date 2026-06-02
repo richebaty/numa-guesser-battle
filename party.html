@@ -171,6 +171,12 @@
     box-shadow:0 5px 16px rgba(238,122,82,0.5);
   }
   .btn-guess:disabled { opacity:.45; box-shadow:none; }
+  .btn-ghost {
+    width:100%; background:transparent; color:var(--sea-deep);
+    font-size:15px; letter-spacing:2px; padding:11px;
+    border:2px solid var(--sea-deep);
+  }
+  .btn-ghost:active { transform:scale(.98); }
 
   /* ===== Overlays ===== */
   .overlay {
@@ -436,6 +442,7 @@
       <div class="tanka" id="finalTanka"></div>
       <button class="btn btn-guess" id="reviewBtn" style="display:none; margin-bottom:10px;">ふりかえりを見る 🗺️</button>
       <button class="btn btn-guess" id="restartBtn">もう一回 ↺</button>
+      <button class="btn btn-ghost" id="homeBtn" style="margin-top:10px;">ホームへ ⌂</button>
     </div>
   </div>
 
@@ -1267,6 +1274,7 @@ document.getElementById("guessBtn").onclick=()=>submitGuess(false);
 document.getElementById("nextBtn").onclick=next;
 document.getElementById("restartBtn").onclick=restart;
 document.getElementById("reviewBtn").onclick=showReview;
+document.getElementById("homeBtn").onclick=()=>{ location.reload(); };
 document.getElementById("reviewCloseBtn").onclick=closeReview;
 document.getElementById("handleRow").onclick=toggleExpand;
 checkPublishPeriod();
