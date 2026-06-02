@@ -688,30 +688,41 @@ async function startRound(){
   if(marker){ marker.setMap(null); marker=null; }
   closePanel();
   hideWait();
-  if(isVersus){ roomRef.child("players/"+myId).update({ ready:false, round:round }); }
+  if(isVersus){ roomRef.child("players/"+myId).update({ ready:false, round:round, alive:true }); }
 
   let found;
   if(isVersus){
     // 対戦：両者がまったく同じ風景を見るため、ホストがpanoを決めて共有する
     const rRef = roomRef.child("rounds/"+round);
+    const sv=new google.maps.StreetViewService();
+    const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
     if(isHost){
-      const sv=new google.maps.StreetViewService();
-      const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
       found=await findPanoAt(sv, anchor);
-      await rRef.set({
-        panoId: found.panoId,
-        lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint, yomi: found.yomi||""
-      });
+      try{
+        await rRef.set({
+          panoId: found.panoId,
+          lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint, yomi: found.yomi||""
+        });
+      }catch(e){ /* 書き込み失敗しても自分の画面は進める */ }
     } else {
-      // 参加者：ホストがpanoを書き込むのを待つ
-      found = await new Promise(resolve=>{
-        rRef.on("value", snap=>{
+      // 参加者：ホストがpanoを書き込むのを待つ。ただし一定時間で自力に切り替え（固まり防止）
+      found = await new Promise(async (resolve)=>{
+        let settled=false;
+        const onVal=(snap)=>{
           const v=snap.val();
-          if(v && v.panoId){
-            rRef.off();
+          if(v && v.panoId && !settled){
+            settled=true; rRef.off("value", onVal);
             resolve({panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||""});
           }
-        });
+        };
+        rRef.on("value", onVal);
+        // 8秒待ってもホストのpanoが来なければ、同じエリアから自分で探して進む
+        setTimeout(async ()=>{
+          if(settled) return;
+          settled=true; try{ rRef.off("value", onVal); }catch(e){}
+          const f=await findPanoAt(sv, anchor);
+          resolve(f);
+        }, 8000);
       });
     }
   } else {
@@ -1039,8 +1050,9 @@ async function hostGo(){
     seed: seed, state:"lobby", started:false,
     players: { [myId]:{ name:myName, total:0, round:0, ready:false, alive:true, host:true } }
   });
-  // 主催者が抜けたら部屋ごと消す（後片付け）
-  roomRef.onDisconnect().remove();
+  // 主催者が切断しても部屋は消さない（瞬断で全員が固まるのを防ぐ）。
+  // 自分が抜けたことだけ印にする。
+  roomRef.child("players/"+myId).onDisconnect().update({ alive:false });
   buildRoundOrder(seed);
   enterLobby();
 }
