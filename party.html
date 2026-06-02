@@ -554,6 +554,7 @@ let myName="";           // 自分のニックネーム
 let playersCache={};     // 全プレイヤーの最新状態 {id:{name,total,round,ready,alive}}
 let lobbyReady=false;    // 主催者がスタートを押したか
 let syncTimer=null;      // 待ち合わせのタイムアウト用
+let sharedPanos=null;    // 主催者が用意した5問ぶんの風景（全員共通）
 
 const NUMAZU = { center:{lat:35.0960, lng:138.8634} };
 // 各地区の代表地点。r = 探索半径(m)。郊外・海岸部はストリートビューが
@@ -688,44 +689,15 @@ async function startRound(){
   if(marker){ marker.setMap(null); marker=null; }
   closePanel();
   hideWait();
-  if(isVersus){ roomRef.child("players/"+myId).update({ ready:false, round:round, alive:true }); }
+  if(isVersus){ roomRef.child("players/"+myId).update({ round:round, alive:true }); }
 
   let found;
-  if(isVersus){
-    // 対戦：両者がまったく同じ風景を見るため、ホストがpanoを決めて共有する
-    const rRef = roomRef.child("rounds/"+round);
-    const sv=new google.maps.StreetViewService();
-    const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
-    if(isHost){
-      found=await findPanoAt(sv, anchor);
-      try{
-        await rRef.set({
-          panoId: found.panoId,
-          lat: found.pos.lat(), lng: found.pos.lng(), hint: found.hint, yomi: found.yomi||""
-        });
-      }catch(e){ /* 書き込み失敗しても自分の画面は進める */ }
-    } else {
-      // 参加者：ホストがpanoを書き込むのを待つ。ただし一定時間で自力に切り替え（固まり防止）
-      found = await new Promise(async (resolve)=>{
-        let settled=false;
-        const onVal=(snap)=>{
-          const v=snap.val();
-          if(v && v.panoId && !settled){
-            settled=true; rRef.off("value", onVal);
-            resolve({panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||""});
-          }
-        };
-        rRef.on("value", onVal);
-        // 8秒待ってもホストのpanoが来なければ、同じエリアから自分で探して進む
-        setTimeout(async ()=>{
-          if(settled) return;
-          settled=true; try{ rRef.off("value", onVal); }catch(e){}
-          const f=await findPanoAt(sv, anchor);
-          resolve(f);
-        }, 8000);
-      });
-    }
+  if(isVersus && sharedPanos && sharedPanos[round-1]){
+    // 対戦：主催者が用意した共通の風景を使う（待たない＝固まらない）
+    const v=sharedPanos[round-1];
+    found={panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||""};
   } else {
+    // 一人用、または万一panoが配られていない場合は自分で探す
     const sv=new google.maps.StreetViewService();
     const anchor=roundOrder[round-1] || NUMAZU_ANCHORS[0];
     found=await findPanoAt(sv, anchor);
@@ -806,8 +778,11 @@ function submitGuess(fromTimer=false, noAnswer=false){
   document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の問題へ →";
 
   if(isVersus){
-    // 自分のこの巡の得点と累計をみんなに共有
-    roomRef.child("players/"+myId).update({ total: total, round: round, ready: false });
+    // 自分のこの問の得点・累計・回答地点をみんなに共有（振り返りにも使う）
+    const g = guessLatLng ? {lat:guessLatLng.lat(), lng:guessLatLng.lng()} : null;
+    const upd = { total: total, round: round };
+    upd["guesses/"+round] = { pts: pts, lat: g?g.lat:null, lng: g?g.lng:null };
+    roomRef.child("players/"+myId).update(upd);
     updateResultVs();
   }
   document.getElementById("resultOverlay").classList.add("show");
@@ -818,10 +793,13 @@ function next(){
     if(round>=MAX_ROUNDS) showFinal(); else startRound();
     return;
   }
-  // 対戦：自分は準備完了をマークし、全員の準備を待つ（止まった人がいても保険で進む）
-  roomRef.child("players/"+myId).update({ ready:true });
-  const goNext = round>=MAX_ROUNDS;
-  waitForEveryoneThen(()=>{ hideWait(); if(goNext) showFinal(); else startRound(); });
+  // 対戦：各自のペースで進む（誰も待たない＝固まらない）
+  if(round>=MAX_ROUNDS){
+    roomRef.child("players/"+myId).update({ finished:true, round:round });
+    showFinal();
+  } else {
+    startRound();
+  }
 }
 // 生きている全員が同じ round を終えるまで待つ。
 // SYNC_TIMEOUT_MS を過ぎたら、止まっている人を待たずに先へ進む保険つき。
@@ -866,7 +844,7 @@ function hideWait(){ document.getElementById("waitOverlay").classList.remove("sh
 function rankingLines(){
   const arr=Object.entries(playersCache)
     .filter(([id,p])=>p && p.alive!==false)
-    .map(([id,p])=>({id, name:p.name||"プレイヤー", total:p.total||0}))
+    .map(([id,p])=>({id, name:p.name||"プレイヤー", total:p.total||0, finished:p.finished===true}))
     .sort((a,b)=>b.total-a.total);
   return arr;
 }
@@ -915,24 +893,12 @@ function showFinal(){
   const verdict=document.getElementById("finalVerdict");
   const vsRow=document.getElementById("finalVsRow");
   if(isVersus){
-    const arr=rankingLines();
-    const myRank=arr.findIndex(p=>p.id===myId)+1;
     vsRow.style.display="none";
     verdict.style.display="block";
-    if(myRank===1){ verdict.textContent="優勝！ 🎉 今日の沼津王"; verdict.className="final-verdict win"; }
-    else if(myRank<=3){ verdict.textContent=myRank+"位！ あっぱれ"; verdict.className="final-verdict draw"; }
-    else { verdict.textContent=myRank+"位 / "+arr.length+"人"; verdict.className="final-verdict lose"; }
-    // 最終順位表を短歌の上に差し込む
-    const board=document.getElementById("finalBoard");
-    board.style.display="block";
-    board.innerHTML = `<div style="font-weight:bold;margin-bottom:6px;">最終順位</div>` +
-      arr.map((p,i)=>{
-        const mine = p.id===myId ? ' style="color:var(--coral);font-weight:bold;"' : '';
-        const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
-        return `<div${mine}>${medal} ${escapeHtml(p.name)} … ${p.total.toLocaleString()}点</div>`;
-      }).join("");
     document.getElementById("restartBtn").style.display="none";
     const br=document.getElementById("bestRow"); if(br) br.style.display="none";
+    finalShowing=true;
+    renderFinalBoard();   // 順位表は listenScores からも随時更新される
   } else {
     verdict.style.display="none"; vsRow.style.display="none";
     document.getElementById("finalBoard").style.display="none";
@@ -940,6 +906,37 @@ function showFinal(){
     showBestScore();
   }
   document.getElementById("finalOverlay").classList.add("show");
+}
+// 対戦の最終画面：今わかっている順位を表示。まだ解いている人がいれば「プレイ中」と示し、
+// 全員が終わると「最終順位」に変わる。listenScores から繰り返し呼ばれて自動更新される。
+let finalShowing=false;
+function renderFinalBoard(){
+  if(!finalShowing) return;
+  const arr=rankingLines(); // total降順の配列 [{id,name,total,...}]
+  const all=Object.values(playersCache||{}).filter(p=>p && p.alive!==false);
+  const finishedCount=all.filter(p=>p && p.finished===true).length;
+  const everyoneDone = all.length>0 && finishedCount>=all.length;
+
+  const myRank=arr.findIndex(p=>p.id===myId)+1;
+  const verdict=document.getElementById("finalVerdict");
+  if(everyoneDone){
+    if(myRank===1){ verdict.textContent="優勝！ 🎉 今日の沼津王"; verdict.className="final-verdict win"; }
+    else if(myRank<=3){ verdict.textContent=myRank+"位！ あっぱれ"; verdict.className="final-verdict draw"; }
+    else { verdict.textContent=myRank+"位 / "+arr.length+"人"; verdict.className="final-verdict lose"; }
+  } else {
+    verdict.textContent="いまの順位："+myRank+"位 / "+arr.length+"人";
+    verdict.className="final-verdict draw";
+  }
+  const board=document.getElementById("finalBoard");
+  board.style.display="block";
+  const title = everyoneDone ? "最終順位" : `順位（${finishedCount}/${all.length}人 終了）`;
+  board.innerHTML = `<div style="font-weight:bold;margin-bottom:6px;">${title}</div>` +
+    arr.map((p,i)=>{
+      const mine = p.id===myId ? ' style="color:var(--coral);font-weight:bold;"' : '';
+      const medal = everyoneDone ? (i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".") : ((i+1)+".");
+      const playing = (p.finished===true) ? "" : ` <span style="color:var(--sea);font-size:13px;">…プレイ中</span>`;
+      return `<div${mine}>${medal} ${escapeHtml(p.name)} … ${(p.total||0).toLocaleString()}点${playing}</div>`;
+    }).join("");
 }
 // 一人用：その端末の自己ベストを記録・表示（保存できない環境では静かに非表示）
 function showBestScore(){
@@ -1105,10 +1102,15 @@ function enterLobby(){
     playersCache = snap.val() || {};
     renderLobby();
   });
-  // ゲーム開始の合図を監視
-  roomRef.child("started").on("value", snap=>{
+  // ゲーム開始の合図を監視（panosが配られたら各自スタート）
+  roomRef.child("started").on("value", async snap=>{
     if(snap.val()===true){
       roomRef.child("started").off();
+      // 全員共通の5問ぶんの風景を取得
+      try{
+        const ps=await roomRef.child("panos").get();
+        sharedPanos = ps.exists() ? ps.val() : null;
+      }catch(e){ sharedPanos=null; }
       document.getElementById("lobbyOverlay").classList.remove("show");
       document.getElementById("oppbar").style.display="flex";
       listenScores();
@@ -1131,9 +1133,20 @@ function renderLobby(){
     document.getElementById("lobbyStartBtn").textContent = arr.length<2 ? "あと1人以上で はじめられます" : `${arr.length}人で はじめる →`;
   }
 }
-function lobbyStart(){
+async function lobbyStart(){
   if(!isHost) return;
-  roomRef.update({ started:true, state:"playing" });
+  const btn=document.getElementById("lobbyStartBtn");
+  btn.disabled=true; btn.textContent="準備中…";
+  if(!await ensureGoogle()){ btn.disabled=false; return; }
+  // 5問ぶんの風景を主催者がまとめて決めて、全員に配る（各自ペースでも同じ問題になる）
+  const sv=new google.maps.StreetViewService();
+  const panos=[];
+  for(let i=0;i<MAX_ROUNDS;i++){
+    const anchor=roundOrder[i] || NUMAZU_ANCHORS[0];
+    const f=await findPanoAt(sv, anchor);
+    panos.push({ panoId:f.panoId, lat:f.pos.lat(), lng:f.pos.lng(), hint:f.hint, yomi:f.yomi||"" });
+  }
+  await roomRef.update({ panos: panos, started:true, state:"playing" });
 }
 
 // ===== 全員のスコアを監視して順位表に反映 =====
@@ -1147,7 +1160,7 @@ function listenScores(){
     const myRank=arr.findIndex(p=>p.id===myId)+1;
     document.getElementById("oppbarOpp").textContent=`${myRank}位/${arr.length}人`;
     if(document.getElementById("resultOverlay").classList.contains("show")) updateResultVs();
-    if(document.getElementById("finalOverlay").classList.contains("show") && round>=MAX_ROUNDS) showFinal();
+    if(finalShowing) renderFinalBoard();
   });
 }
 function hideAllBoxes(){
