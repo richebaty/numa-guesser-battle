@@ -177,6 +177,13 @@
     border:2px solid var(--sea-deep);
   }
   .btn-ghost:active { transform:scale(.98); }
+  .share-row { display:flex; gap:8px; justify-content:center; margin-top:12px; }
+  .btn-share {
+    background:var(--sea-deep); color:#fff; font-size:14px; letter-spacing:1px;
+    padding:9px 16px; border-radius:10px;
+  }
+  .btn-share.ghost { background:transparent; color:var(--sea-deep); border:2px solid var(--sea-deep); }
+  .share-note { font-size:12px; color:var(--coral); margin-top:8px; min-height:16px; font-weight:bold; }
 
   /* ===== Overlays ===== */
   .overlay {
@@ -517,6 +524,11 @@
         <div style="font-size:13px;color:var(--sea-deep);">あいことば</div>
         <div class="room-code" id="lobbyCode">----</div>
         <div style="font-size:12px;color:var(--ink);opacity:0.7;">この4文字を みんなに伝えてください</div>
+        <div class="share-row">
+          <button class="btn btn-share" id="shareBtn">友だちに送る ✉</button>
+          <button class="btn btn-share ghost" id="copyBtn">コピー ⧉</button>
+        </div>
+        <div class="share-note" id="shareNote"></div>
       </div>
       <div class="lobby-count" id="lobbyCount">参加者：0人</div>
       <div class="lobby-list" id="lobbyList"></div>
@@ -1276,6 +1288,31 @@ document.getElementById("restartBtn").onclick=restart;
 document.getElementById("reviewBtn").onclick=showReview;
 document.getElementById("homeBtn").onclick=()=>{ location.reload(); };
 document.getElementById("reviewCloseBtn").onclick=closeReview;
+// 友だちに合言葉とURLを送る
+function inviteMessage(){
+  const code=(roomId||document.getElementById("lobbyCode").textContent||"").trim();
+  const url="https://richebaty.github.io/numa-guesser-battle/party.html";
+  return `ぬまゲッサーで対戦しよう！\nあいことば：${code}\n↓ここから参加\n${url}`;
+}
+function flashShareNote(msg){
+  const n=document.getElementById("shareNote");
+  n.textContent=msg; setTimeout(()=>{ if(n.textContent===msg) n.textContent=""; }, 3000);
+}
+document.getElementById("shareBtn").onclick=async ()=>{
+  const text=inviteMessage();
+  if(navigator.share){
+    try{ await navigator.share({ text:text }); }
+    catch(e){ /* キャンセル時は何もしない */ }
+  } else {
+    // 共有メニューが使えない端末（多くのPC）はコピーで代替
+    try{ await navigator.clipboard.writeText(text); flashShareNote("文面をコピーしました。LINEなどに貼り付けて送ってください"); }
+    catch(e){ flashShareNote("この端末では共有できません。合言葉を手で伝えてください"); }
+  }
+};
+document.getElementById("copyBtn").onclick=async ()=>{
+  try{ await navigator.clipboard.writeText(inviteMessage()); flashShareNote("文面をコピーしました！"); }
+  catch(e){ flashShareNote("コピーできませんでした。合言葉を手で伝えてください"); }
+};
 document.getElementById("handleRow").onclick=toggleExpand;
 checkPublishPeriod();
 </script>
