@@ -1150,9 +1150,13 @@ async function hostGo(){
 }
 
 // ===== 参加：あいことばで入る =====
-function showJoin(){
+function showJoin(prefillCode){
   hideAllBoxes();
   document.getElementById("joinBox").style.display="block";
+  if(prefillCode){
+    const ci=document.getElementById("roomCodeInput");
+    ci.value=String(prefillCode).toUpperCase().slice(0,4);
+  }
   document.getElementById("joinName").focus();
 }
 async function joinRoom(){
@@ -1278,7 +1282,7 @@ function checkPublishPeriod(){
 
 document.getElementById("startBtn").onclick=begin;
 document.getElementById("createBtn").onclick=createRoom;
-document.getElementById("joinBtn").onclick=showJoin;
+document.getElementById("joinBtn").onclick=()=>showJoin();
 document.getElementById("hostGoBtn").onclick=hostGo;
 document.getElementById("joinGoBtn").onclick=joinRoom;
 document.getElementById("lobbyStartBtn").onclick=lobbyStart;
@@ -1291,8 +1295,8 @@ document.getElementById("reviewCloseBtn").onclick=closeReview;
 // 友だちに合言葉とURLを送る
 function inviteMessage(){
   const code=(roomId||document.getElementById("lobbyCode").textContent||"").trim();
-  const url="https://richebaty.github.io/numa-guesser-battle/party.html";
-  return `ぬまゲッサーで対戦しよう！\nあいことば：${code}\n↓ここから参加\n${url}`;
+  const url="https://richebaty.github.io/numa-guesser-battle/party.html?join="+encodeURIComponent(code);
+  return `ぬまゲッサーで対戦しよう！\n↓タップして参加（あいことばは自動で入ります）\n${url}\n\n※あいことば：${code}`;
 }
 function flashShareNote(msg){
   const n=document.getElementById("shareNote");
@@ -1315,6 +1319,17 @@ document.getElementById("copyBtn").onclick=async ()=>{
 };
 document.getElementById("handleRow").onclick=toggleExpand;
 checkPublishPeriod();
+// 招待リンク（?join=合言葉）で開かれたら、参加画面を自動で開いて合言葉を入れておく
+(function autoJoinFromLink(){
+  try{
+    const params=new URLSearchParams(location.search);
+    const code=(params.get("join")||"").trim().toUpperCase();
+    if(code && code.length>=1 && code.length<=4){
+      // スプラッシュのボタン群を飛ばして、参加ボックスを開く
+      showJoin(code);
+    }
+  }catch(e){ /* 何もしない（通常起動） */ }
+})();
 </script>
 </body>
 </html>
