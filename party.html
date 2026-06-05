@@ -86,6 +86,23 @@
   .best-row .badge { display:inline-block; background:var(--coral); color:#fff; border-radius:999px; padding:2px 10px; font-size:12px; margin-left:6px; }
   /* 待合室・順位表 */
   .lobby-code-wrap { margin:10px 0 14px; }
+  .mini-info {
+    margin:14px 0; padding:14px 14px 10px; border-radius:16px;
+    background:linear-gradient(170deg, #eaf3f7, #f5efe2);
+    border:1px solid rgba(45,106,142,0.15); text-align:center;
+  }
+  .mini-head { font-size:12px; font-weight:700; color:var(--sea-deep); margin-bottom:8px; letter-spacing:1px; }
+  .mini-page { font-weight:400; opacity:0.7; margin-left:4px; }
+  .mini-art { width:100%; height:120px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+  .mini-art svg { width:auto; height:120px; max-width:100%; }
+  .mini-title { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .mini-text { font-size:12.5px; line-height:1.7; color:var(--ink); text-align:left; min-height:66px; }
+  .mini-nav { display:flex; justify-content:space-between; margin-top:6px; }
+  .mini-btn {
+    font-family:inherit; cursor:pointer; border:none; background:rgba(45,106,142,0.12);
+    color:var(--sea-deep); font-size:18px; font-weight:700; width:38px; height:30px; border-radius:8px;
+  }
+  .mini-btn:active { transform:scale(.95); }
   .lobby-count { font-size:14px; font-weight:bold; color:var(--sea-deep); margin:6px 0; }
   .lobby-list { max-height:180px; overflow-y:auto; margin:8px auto; max-width:280px; text-align:left; }
   .lobby-list .row { padding:7px 12px; margin:4px 0; background:var(--fog); border-radius:10px; font-size:15px; color:var(--ink); }
@@ -261,13 +278,13 @@
   @keyframes floaty { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-10px)} }
   /* Mt Fuji */
   .fuji {
-    position:absolute; bottom:24%; left:22%; transform:translateX(-50%);
-    width:0; height:0; border-left:120px solid transparent;
-    border-right:120px solid transparent; border-bottom:140px solid #5a7d97;
+    position:absolute; bottom:24%; left:26%; transform:translateX(-50%);
+    width:0; height:0; border-left:185px solid transparent;
+    border-right:185px solid transparent; border-bottom:210px solid #5a7d97;
     filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12));
   }
   .fuji::after {
-    content:""; position:absolute; left:-42px; top:0; width:84px; height:42px;
+    content:""; position:absolute; left:-64px; top:0; width:128px; height:64px;
     background:#fbf7ef; clip-path:polygon(50% 0, 78% 60%, 62% 48%, 50% 70%, 38% 48%, 22% 60%);
   }
   /* 沼津港のシンボル「びゅうお」水門（右側）。両側の塔＋上部の展望回廊。 */
@@ -351,6 +368,22 @@
     font-size:11px; letter-spacing:1px; color:var(--sea-deep);
     background:rgba(255,255,255,0.7); padding:5px 14px; border-radius:20px;
     margin-bottom:16px; font-weight:700;
+  }
+  .diff-card {
+    margin-top:16px; background:rgba(255,255,255,0.82);
+    border-radius:18px; padding:12px 16px; backdrop-filter:blur(2px);
+    box-shadow:0 4px 14px rgba(45,106,142,0.15);
+  }
+  .diff-row { display:flex; align-items:center; justify-content:center; gap:6px; }
+  .diff-label { font-size:12px; color:var(--sea-deep); font-weight:700; margin-right:2px; }
+  .diff-btn {
+    font-family:inherit; cursor:pointer; border:2px solid var(--sea-deep);
+    background:transparent; color:var(--sea-deep); font-weight:700;
+    font-size:13px; padding:6px 14px; border-radius:20px; transition:all .15s;
+  }
+  .diff-btn.active { background:var(--sea-deep); color:#fff; }
+  .diff-note {
+    font-size:11px; color:var(--ink); opacity:0.8; margin-top:8px; text-align:center;
   }
   .btn-start {
     background:var(--coral); color:#fff; font-size:19px;
@@ -492,6 +525,14 @@
         <button class="mode-btn" id="createBtn">みんなであそぶ（主催）</button>
         <button class="mode-btn sub" id="joinBtn">あいことばで参加</button>
       </div>
+      <div class="diff-card">
+        <div class="diff-row">
+          <span class="diff-label">むずかしさ</span>
+          <button class="diff-btn active" id="diffEasy">やさしい</button>
+          <button class="diff-btn" id="diffHard">むずかしい</button>
+        </div>
+        <div class="diff-note" id="diffNote">中心部や港など、わかりやすい場所から出題します</div>
+      </div>
 
       <!-- 主催者：待合室を作る -->
       <div class="vs-box" id="hostBox" style="display:none;">
@@ -532,6 +573,19 @@
       </div>
       <div class="lobby-count" id="lobbyCount">参加者：0人</div>
       <div class="lobby-list" id="lobbyList"></div>
+
+      <!-- 待ち時間に流れる沼津のミニ情報 -->
+      <div class="mini-info" id="miniInfo">
+        <div class="mini-head">沼津の ミニ情報 <span class="mini-page" id="miniPage"></span></div>
+        <div class="mini-art" id="miniArt"></div>
+        <div class="mini-title" id="miniTitle"></div>
+        <div class="mini-text" id="miniText"></div>
+        <div class="mini-nav">
+          <button class="mini-btn" id="miniPrev">‹</button>
+          <button class="mini-btn" id="miniNext">›</button>
+        </div>
+      </div>
+
       <button class="btn btn-guess" id="lobbyStartBtn" style="display:none;">全員そろった！ はじめる →</button>
       <div class="vs-status" id="lobbyWaitMsg">主催者が はじめるのを まっています…</div>
     </div>
@@ -596,28 +650,28 @@ const NUMAZU = { center:{lat:35.0960, lng:138.8634} };
 // 少ないため広めに設定。jit = ランダムにずらす範囲(度)。
 const NUMAZU_ANCHORS = [
   // --- 中心市街地 ---
-  {lat:35.1009, lng:138.8634, name:"沼津駅周辺", yomi:"ぬまづえき しゅうへん", r:400, jit:0.010},
-  {lat:35.0980, lng:138.8540, name:"あゆみ橋・狩野川沿い", yomi:"あゆみばし・かのがわ ぞい", r:400, jit:0.010},
-  {lat:35.1100, lng:138.8720, name:"大手町・上土町", yomi:"おおてまち・あげつちちょう", r:400, jit:0.010},
-  {lat:35.0900, lng:138.8800, name:"三枚橋・添地町", yomi:"さんまいばし・そえちちょう", r:500, jit:0.012},
-  {lat:35.1180, lng:138.8580, name:"高島町・五月町", yomi:"たかしまちょう・さつきちょう", r:500, jit:0.012},
+  {lat:35.1009, lng:138.8634, name:"沼津駅周辺", yomi:"ぬまづえき しゅうへん", r:400, jit:0.010, easy:true},
+  {lat:35.0980, lng:138.8540, name:"あゆみ橋・狩野川沿い", yomi:"あゆみばし・かのがわ ぞい", r:400, jit:0.010, easy:true},
+  {lat:35.1100, lng:138.8720, name:"大手町・上土町", yomi:"おおてまち・あげつちちょう", r:400, jit:0.010, easy:true},
+  {lat:35.0900, lng:138.8800, name:"三枚橋・添地町", yomi:"さんまいばし・そえちちょう", r:500, jit:0.012, easy:true},
+  {lat:35.1180, lng:138.8580, name:"高島町・五月町", yomi:"たかしまちょう・さつきちょう", r:500, jit:0.012, easy:true},
   // --- 港・千本 ---
-  {lat:35.0875, lng:138.8489, name:"沼津港・千本港町", yomi:"ぬまづこう・せんぼんみなとちょう", r:400, jit:0.010},
-  {lat:35.0833, lng:138.8350, name:"千本松原", yomi:"せんぼんまつばら", r:600, jit:0.014},
-  {lat:35.1050, lng:138.8450, name:"片浜・松長", yomi:"かたはま・まつなが", r:600, jit:0.014},
+  {lat:35.0875, lng:138.8489, name:"沼津港・千本港町", yomi:"ぬまづこう・せんぼんみなとちょう", r:400, jit:0.010, easy:true},
+  {lat:35.0833, lng:138.8350, name:"千本松原", yomi:"せんぼんまつばら", r:600, jit:0.014, easy:true},
+  {lat:35.1050, lng:138.8450, name:"片浜・松長", yomi:"かたはま・まつなが", r:600, jit:0.014, easy:true},
   // --- 北部 ---
-  {lat:35.1250, lng:138.8900, name:"岡宮・東熊堂", yomi:"おかみや・ひがしくまんどう", r:600, jit:0.014},
-  {lat:35.1400, lng:138.8650, name:"愛鷹・東椎路", yomi:"あしたか・ひがししいじ", r:800, jit:0.016},
+  {lat:35.1250, lng:138.8900, name:"岡宮・東熊堂", yomi:"おかみや・ひがしくまんどう", r:600, jit:0.014, easy:true},
+  {lat:35.1400, lng:138.8650, name:"愛鷹・東椎路", yomi:"あしたか・ひがししいじ", r:800, jit:0.016, easy:false},
   // --- 西部平野 ---
-  {lat:35.1080, lng:138.8100, name:"原地区", yomi:"はら ちく", r:800, jit:0.016},
-  {lat:35.1300, lng:138.8000, name:"浮島地区", yomi:"うきしま ちく", r:1000, jit:0.018},
-  {lat:35.1550, lng:138.8350, name:"大平地区", yomi:"おおひら ちく", r:1000, jit:0.018},
+  {lat:35.1080, lng:138.8100, name:"原地区", yomi:"はら ちく", r:800, jit:0.016, easy:false},
+  {lat:35.1300, lng:138.8000, name:"浮島地区", yomi:"うきしま ちく", r:1000, jit:0.018, easy:false},
+  {lat:35.1550, lng:138.8350, name:"大平地区", yomi:"おおひら ちく", r:1000, jit:0.018, easy:false},
   // --- 西浦・内浦（駿河湾岸） ---
-  {lat:35.0350, lng:138.7950, name:"内浦地区（三津・長浜）", yomi:"うちうら ちく（みと・ながはま）", r:1000, jit:0.012},
-  {lat:35.0150, lng:138.7850, name:"西浦地区（江梨・木負）", yomi:"にしうら ちく（えなし・きしょう）", r:1200, jit:0.016},
+  {lat:35.0350, lng:138.7950, name:"内浦地区（三津・長浜）", yomi:"うちうら ちく（みと・ながはま）", r:1000, jit:0.012, easy:false},
+  {lat:35.0150, lng:138.7850, name:"西浦地区（江梨・木負）", yomi:"にしうら ちく（えなし・きしょう）", r:1200, jit:0.016, easy:false},
   // --- 戸田・井田（達磨半島・西海岸） ---
-  {lat:34.9700, lng:138.7780, name:"戸田地区", yomi:"へだ ちく", r:1200, jit:0.014},
-  {lat:34.9950, lng:138.7720, name:"井田地区", yomi:"いた ちく", r:1200, jit:0.012},
+  {lat:34.9700, lng:138.7780, name:"戸田地区", yomi:"へだ ちく", r:1200, jit:0.014, easy:false},
+  {lat:34.9950, lng:138.7720, name:"井田地区", yomi:"いた ちく", r:1200, jit:0.012, easy:false},
 ];
 const POINTS_PER_ROUND = 5000;
 const TANKA = [
@@ -631,6 +685,19 @@ const TANKA = [
 let map, pano, geocoder, marker, apiKey="";
 let target=null, guessLatLng=null, round=0, total=0;
 let roundOrder=[]; // 各巡で使うエリアの並び（全域まんべんなく）
+let difficulty="easy"; // "easy"=やさしい(中心部中心) / "hard"=むずかしい(全域)
+// 難易度に応じた出題エリアのプールを返す
+function anchorPool(){
+  if(difficulty==="easy"){
+    const easy=NUMAZU_ANCHORS.filter(a=>a.easy);
+    return easy.length>=MAX_ROUNDS ? easy : NUMAZU_ANCHORS;
+  }
+  return NUMAZU_ANCHORS; // むずかしい＝全域（遠い場所も出る）
+}
+// プール内のインデックス配列を返す
+function poolIndices(){
+  return NUMAZU_ANCHORS.map((a,i)=>i).filter(i=> difficulty==="easy" ? NUMAZU_ANCHORS[i].easy : true);
+}
 const MAX_ROUNDS = 5;
 const ROUND_SECONDS = 30;
 let timerId=null, timeLeft=ROUND_SECONDS;
@@ -656,13 +723,14 @@ function buildRoundOrder(seed){
     roundOrder = seed.map(i=>NUMAZU_ANCHORS[i] || NUMAZU_ANCHORS[0]);
     return;
   }
-  let order=shuffle(NUMAZU_ANCHORS);
-  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(NUMAZU_ANCHORS)); }
+  let pool=anchorPool();
+  let order=shuffle(pool);
+  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(pool)); }
   roundOrder=order.slice(0,MAX_ROUNDS);
 }
 // ホストが出題エリアの並び(インデックス配列)を生成
 function makeSeedIndices(){
-  let idx=NUMAZU_ANCHORS.map((_,i)=>i);
+  let idx=poolIndices();
   let order=shuffle(idx);
   while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(idx)); }
   return order.slice(0,MAX_ROUNDS);
@@ -1195,6 +1263,7 @@ function enterLobby(){
   // 主催者だけ「はじめる」ボタンを持つ
   document.getElementById("lobbyStartBtn").style.display = isHost ? "" : "none";
   document.getElementById("lobbyWaitMsg").style.display = isHost ? "none" : "";
+  startMini();
 
   // 参加者リストを監視
   roomRef.child("players").on("value", snap=>{
@@ -1211,6 +1280,7 @@ function enterLobby(){
         sharedPanos = ps.exists() ? ps.val() : null;
       }catch(e){ sharedPanos=null; }
       document.getElementById("lobbyOverlay").classList.remove("show");
+      stopMini();
       document.getElementById("oppbar").style.display="flex";
       listenScores();
       startRound();
@@ -1283,6 +1353,126 @@ function checkPublishPeriod(){
 document.getElementById("startBtn").onclick=begin;
 document.getElementById("createBtn").onclick=createRoom;
 document.getElementById("joinBtn").onclick=()=>showJoin();
+// むずかしさの切り替え
+function setDifficulty(d){
+  difficulty=d;
+  document.getElementById("diffEasy").classList.toggle("active", d==="easy");
+  document.getElementById("diffHard").classList.toggle("active", d==="hard");
+  document.getElementById("diffNote").textContent = d==="easy"
+    ? "中心部や港など、わかりやすい場所から出題します"
+    : "戸田・西浦・浮島など、市内全域から出題します（上級）";
+}
+document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
+document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
+
+// ===== 待合室の沼津ミニ情報スライド =====
+// イラストは写真の転載ではなく、特徴をとらえた手描き風のオリジナル。色はトップ画面と統一。
+const MINI_ART = {
+  matsubara: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="120" fill="none"/>
+    <circle cx="150" cy="34" r="14" fill="#ffd98a"/>
+    <polygon points="60,78 100,24 140,78" fill="#7d99ad"/>
+    <polygon points="84,46 100,24 116,46 108,42 100,50 92,42" fill="#fbf7ef"/>
+    <rect x="0" y="78" width="200" height="42" fill="#cdb892"/>
+    <g fill="#3f7a5a">
+      <circle cx="24" cy="74" r="11"/><circle cx="40" cy="78" r="13"/><circle cx="56" cy="74" r="10"/>
+      <circle cx="150" cy="76" r="12"/><circle cx="166" cy="80" r="14"/><circle cx="182" cy="75" r="11"/>
+    </g>
+    <g fill="#5a3d28"><rect x="38" y="80" width="4" height="14"/><rect x="164" y="82" width="4" height="14"/></g>
+    <rect x="0" y="104" width="200" height="16" fill="#2d6a8e" opacity="0.5"/>
+  </svg>`,
+  byuo: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="36" cy="30" r="13" fill="#ffd98a"/>
+    <rect x="0" y="92" width="200" height="28" fill="#2d6a8e" opacity="0.5"/>
+    <rect x="78" y="30" width="16" height="74" fill="#fbf7ef" stroke="#9bb0bd" stroke-width="2"/>
+    <rect x="110" y="30" width="16" height="74" fill="#fbf7ef" stroke="#9bb0bd" stroke-width="2"/>
+    <rect x="74" y="34" width="56" height="16" fill="#fff" stroke="#9bb0bd" stroke-width="2"/>
+    <line x1="80" y1="42" x2="124" y2="42" stroke="#9bb0bd" stroke-width="2" stroke-dasharray="4 3"/>
+    <rect x="82" y="74" width="40" height="30" fill="#f3f1ec" stroke="#9bb0bd" stroke-width="2"/>
+  </svg>`,
+  goyotei: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="96" width="200" height="24" fill="#9db98a" opacity="0.6"/>
+    <g fill="#3f7a5a"><circle cx="22" cy="60" r="14"/><circle cx="178" cy="60" r="14"/><circle cx="40" cy="66" r="11"/><circle cx="160" cy="66" r="11"/></g>
+    <rect x="60" y="64" width="80" height="36" fill="#fbf7ef" stroke="#9bb0bd" stroke-width="2"/>
+    <polygon points="54,64 100,40 146,64" fill="#7d6a55"/>
+    <rect x="74" y="76" width="14" height="24" fill="#9bb0bd"/>
+    <rect x="112" y="76" width="14" height="24" fill="#9bb0bd"/>
+    <rect x="94" y="80" width="12" height="20" fill="#7d6a55"/>
+  </svg>`,
+  kanogawa: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="160" cy="28" r="12" fill="#ffd98a"/>
+    <polygon points="120,70 150,30 180,70" fill="#9bb0bd"/>
+    <polygon points="138,42 150,30 162,42" fill="#fbf7ef"/>
+    <path d="M0,72 Q50,64 100,72 T200,72 L200,120 L0,120 Z" fill="#4f8fb0" opacity="0.7"/>
+    <path d="M0,86 Q50,80 100,86 T200,86" fill="none" stroke="#fff" stroke-width="2" opacity="0.5"/>
+    <path d="M0,100 Q50,94 100,100 T200,100" fill="none" stroke="#fff" stroke-width="2" opacity="0.4"/>
+    <g fill="#3f7a5a"><circle cx="18" cy="68" r="9"/><circle cx="30" cy="70" r="7"/></g>
+  </svg>`,
+  uchiura: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="40" cy="30" r="12" fill="#ffd98a"/>
+    <path d="M0,60 Q40,52 90,58 L200,52 L200,90 L0,90 Z" fill="#7d99ad" opacity="0.55"/>
+    <path d="M0,80 L200,80 L200,120 L0,120 Z" fill="#2d6a8e" opacity="0.55"/>
+    <g fill="#6c8597"><rect x="120" y="70" width="10" height="14"/><rect x="134" y="66" width="10" height="18"/><rect x="148" y="72" width="10" height="12"/></g>
+    <g stroke="#5a3d28" stroke-width="2"><line x1="40" y1="84" x2="40" y2="98"/><line x1="56" y1="84" x2="56" y2="98"/></g>
+    <ellipse cx="48" cy="100" rx="22" ry="5" fill="#cdb892"/>
+  </svg>`,
+  heda: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="165" cy="28" r="12" fill="#ffd98a"/>
+    <path d="M0,64 Q60,40 130,58 Q170,64 200,56 L200,90 L0,90 Z" fill="#7d99ad" opacity="0.5"/>
+    <path d="M0,82 L200,82 L200,120 L0,120 Z" fill="#2d6a8e" opacity="0.6"/>
+    <path d="M40,100 q14,-10 28,0 q-14,6 -28,0 Z" fill="#fbf7ef" stroke="#9bb0bd" stroke-width="1.5"/>
+    <line x1="54" y1="78" x2="54" y2="100" stroke="#5a3d28" stroke-width="2"/>
+    <path d="M54,80 l16,8 -16,6 Z" fill="#ee7a52"/>
+  </svg>`,
+  minato: `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="158" cy="28" r="12" fill="#ffd98a"/>
+    <path d="M0,86 L200,86 L200,120 L0,120 Z" fill="#2d6a8e" opacity="0.6"/>
+    <rect x="30" y="58" width="40" height="28" fill="#ee7a52" opacity="0.85"/>
+    <rect x="30" y="58" width="40" height="8" fill="#c85a3a"/>
+    <rect x="92" y="50" width="36" height="36" fill="#fbf7ef" stroke="#9bb0bd" stroke-width="2"/>
+    <line x1="110" y1="50" x2="110" y2="86" stroke="#9bb0bd" stroke-width="2"/>
+    <line x1="92" y1="68" x2="128" y2="68" stroke="#9bb0bd" stroke-width="2"/>
+    <path d="M150,70 q10,-8 20,0 q-10,6 -20,0 Z" fill="#fff" stroke="#9bb0bd" stroke-width="1.5"/>
+    <line x1="160" y1="56" x2="160" y2="70" stroke="#5a3d28" stroke-width="2"/>
+  </svg>`
+};
+const MINI_SLIDES = [
+  { art:"matsubara", title:"千本松原（せんぼんまつばら）",
+    text:"狩野川の河口から富士市まで、約15kmも続く松原。戦国時代の戦でいちど切られてしまった松を、増誉上人が一本ずつお経を唱えながら植え直したと伝わります。歌人・若山牧水が伐採から守ったことでも有名で、今では30万本以上あるそうです。" },
+  { art:"byuo", title:"びゅうお（沼津港大型展望水門）",
+    text:"沼津港のシンボル。東海地震の津波からまちを守るため2004年にできました。扉は幅40m・高さ9.3m・重さ406tと日本最大級。地上30mの展望回廊からは、富士山や駿河湾、千本松原まで360度見渡せます。名前は「View（景色）＋魚（うお）」から。" },
+  { art:"goyotei", title:"沼津御用邸記念公園",
+    text:"1893年（明治26年）、のちの大正天皇のご静養のために造られた御用邸。松林と駿河湾に囲まれた、富士山も望める温暖な場所です。本邸は沼津大空襲で焼けましたが、西附属邸・東附属邸が残り、2016年に「旧沼津御用邸苑地」として国の名勝になりました。" },
+  { art:"kanogawa", title:"狩野川（かのがわ）",
+    text:"伊豆でいちばん高い天城山に源を発し、沼津のまちなかをゆったり流れて駿河湾へ注ぐ一級河川。静岡県で唯一、北へ向かって流れる川として知られます。鮎の友釣りがさかんで、川べりの階段堤は市民の憩いの場。夏の花火など、催しもたくさん。" },
+  { art:"uchiura", title:"内浦・三津（うちうら・みと）",
+    text:"駿河湾に面した、おだやかな入り江の地区。古くからの漁港や、海沿いの宿が並ぶ景色が魅力です。波がおだやかで、海越しに富士山を望めるスポットも多く、沼津の海の幸を支えてきた土地です。" },
+  { art:"heda", title:"戸田（へだ）",
+    text:"達磨半島の先にある、深い湾に守られた港まち。日本でいちばん深い駿河湾に面し、タカアシガニなどの深海の幸で知られます。江戸時代の終わりには、ここで日本初の本格的な洋式帆船が造られた歴史もあります。" },
+  { art:"minato", title:"沼津港（ぬまづこう）",
+    text:"駿河湾の新鮮な魚が集まる、活気ある港。市場や食事処が並び、たくさんの人でにぎわいます。すぐそばには展望水門びゅうおがそびえ、海と富士山、行き交う船の景色が楽しめる、沼津を代表する場所です。" }
+];
+let miniIdx=0, miniTimer=null;
+function renderMini(){
+  const s=MINI_SLIDES[miniIdx];
+  document.getElementById("miniArt").innerHTML = MINI_ART[s.art]||"";
+  document.getElementById("miniTitle").textContent = s.title;
+  document.getElementById("miniText").textContent = s.text;
+  document.getElementById("miniPage").textContent = `(${miniIdx+1}/${MINI_SLIDES.length})`;
+}
+function miniGo(d){
+  miniIdx=(miniIdx+d+MINI_SLIDES.length)%MINI_SLIDES.length;
+  renderMini();
+  restartMiniTimer();
+}
+function restartMiniTimer(){
+  if(miniTimer) clearInterval(miniTimer);
+  miniTimer=setInterval(()=>{ miniIdx=(miniIdx+1)%MINI_SLIDES.length; renderMini(); }, 7000);
+}
+function startMini(){ miniIdx=0; renderMini(); restartMiniTimer(); }
+function stopMini(){ if(miniTimer){ clearInterval(miniTimer); miniTimer=null; } }
+document.getElementById("miniPrev").onclick=()=>miniGo(-1);
+document.getElementById("miniNext").onclick=()=>miniGo(1);
 document.getElementById("hostGoBtn").onclick=hostGo;
 document.getElementById("joinGoBtn").onclick=joinRoom;
 document.getElementById("lobbyStartBtn").onclick=lobbyStart;
