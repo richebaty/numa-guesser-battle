@@ -381,7 +381,7 @@
     border-radius:18px; padding:12px 16px; backdrop-filter:blur(2px);
     box-shadow:0 4px 14px rgba(45,106,142,0.15);
   }
-  .diff-row { display:flex; align-items:center; justify-content:center; gap:6px; }
+  .diff-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
   .diff-label { font-size:12px; color:var(--sea-deep); font-weight:700; margin-right:2px; }
   .diff-btn {
     font-family:inherit; cursor:pointer; border:2px solid var(--sea-deep);
@@ -535,9 +535,10 @@
       </div>
       <div class="diff-card">
         <div class="diff-row">
-          <span class="diff-label">むずかしさ</span>
+          <span class="diff-label">モード</span>
           <button class="diff-btn active" id="diffEasy">やさしい</button>
           <button class="diff-btn" id="diffHard">むずかしい</button>
+          <button class="diff-btn" id="diffTakara">宝100選</button>
         </div>
         <div class="diff-note" id="diffNote">中心部や港など、わかりやすい場所から出題します</div>
       </div>
@@ -741,6 +742,13 @@ function shuffle(arr){
 // seedは「アンカーの並び」をそのまま配列で受け渡す（宝も通常も同じ形）。
 const TAKARA_PER_GAME = 2;
 function composeRoundAnchors(){
+  // 宝100選モード：5問すべて宝から出す
+  if(difficulty==="takara"){
+    let t=shuffle(TAKARA_ANCHORS.slice());
+    while(t.length<MAX_ROUNDS){ t=t.concat(shuffle(TAKARA_ANCHORS.slice())); }
+    return t.slice(0, MAX_ROUNDS);
+  }
+  // やさしい・むずかしい：2問を宝、残りを通常エリアから
   const takaraPick = shuffle(TAKARA_ANCHORS.slice()).slice(0, Math.min(TAKARA_PER_GAME, TAKARA_ANCHORS.length));
   let pool=anchorPool();
   const need=MAX_ROUNDS - takaraPick.length;
@@ -1393,17 +1401,21 @@ function checkPublishPeriod(){
 document.getElementById("startBtn").onclick=begin;
 document.getElementById("createBtn").onclick=createRoom;
 document.getElementById("joinBtn").onclick=()=>showJoin();
-// むずかしさの切り替え
+// モードの切り替え（やさしい/むずかしい/宝100選）
 function setDifficulty(d){
   difficulty=d;
   document.getElementById("diffEasy").classList.toggle("active", d==="easy");
   document.getElementById("diffHard").classList.toggle("active", d==="hard");
-  document.getElementById("diffNote").textContent = d==="easy"
-    ? "中心部や港など、わかりやすい場所から出題します"
-    : "戸田・西浦・浮島など、市内全域から出題します（上級）";
+  document.getElementById("diffTakara").classList.toggle("active", d==="takara");
+  let note;
+  if(d==="easy") note="中心部や港など、わかりやすい場所から出題します";
+  else if(d==="hard") note="戸田・西浦・浮島など、市内全域から出題します（上級）";
+  else note="ぬまづの宝100選だけを巡る、沼津の宝めぐりモード";
+  document.getElementById("diffNote").textContent=note;
 }
 document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
 document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
+document.getElementById("diffTakara").onclick=()=>setDifficulty("takara");
 
 // ===== 待合室の沼津ミニ情報スライド =====
 // イラストは写真の転載ではなく、特徴をとらえた手描き風のオリジナル。色はトップ画面と統一。
