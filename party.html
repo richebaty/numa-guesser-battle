@@ -241,6 +241,13 @@
   .stat .n { font-size:26px; font-weight:700; font-family:"Helvetica Neue",sans-serif; color:var(--sea-deep); }
   .stat .l { font-size:10px; letter-spacing:2px; color:rgba(26,38,52,0.55); }
   .placename { font-size:14px; letter-spacing:1px; margin-bottom:10px; color:var(--sea-deep); }
+  .takara-note {
+    font-size:12.5px; line-height:1.7; color:var(--ink); text-align:left;
+    background:linear-gradient(170deg,#fff6e8,#eaf3f7); border:1px solid rgba(224,185,74,0.5);
+    border-radius:12px; padding:10px 12px; margin:0 0 14px;
+  }
+  .takara-note .badge { display:inline-block; background:var(--gold); color:#5a4a1a; font-weight:700;
+    border-radius:999px; padding:1px 10px; font-size:11px; margin-bottom:5px; }
   ruby rt { font-size:0.5em; color:inherit; opacity:0.85; font-weight:400; }
   .play-hint {
     position:absolute; left:50%; transform:translateX(-50%);
@@ -456,6 +463,7 @@
         <div class="stat"><div class="n" id="ptsVal">—</div><div class="l"><ruby>獲得点<rt>かくとくてん</rt></ruby></div></div>
       </div>
       <div class="placename" id="placeName">— 沼津市 —</div>
+      <div class="takara-note" id="takaraNote" style="display:none;"></div>
       <div class="result-vs" id="resultVs"></div>
       <button class="btn btn-guess" id="nextBtn">次の問題へ →</button>
     </div>
@@ -673,6 +681,17 @@ const NUMAZU_ANCHORS = [
   {lat:34.9700, lng:138.7780, name:"戸田地区", yomi:"へだ ちく", r:1200, jit:0.014, easy:false},
   {lat:34.9950, lng:138.7720, name:"井田地区", yomi:"いた ちく", r:1200, jit:0.012, easy:false},
 ];
+// ぬまづの宝100選（ストリートビューで見えやすい場所を厳選）。位置は沼津市HPの地図より。
+const TAKARA_ANCHORS = [
+  {lat:35.0726, lng:138.8645, name:"牛臥山公園", yomi:"うしぶせやま こうえん", r:150, jit:0, note:"千本浜から御用邸へ続く海岸線を楽しめる海の公園。ぬまづの宝100選No.008。"},
+  {lat:35.1288, lng:138.8819, name:"門池", yomi:"かどいけ", r:200, jit:0, note:"約1.3kmの遊歩道で四季を感じられる憩いの池。ぬまづの宝100選No.012。"},
+  {lat:34.9762, lng:138.7653, name:"御浜岬（戸田）", yomi:"みはまみさき", r:200, jit:0, note:"砂れきが堆積してできた、戸田港を抱く岬。ジオサイト。ぬまづの宝100選No.029。"},
+  {lat:35.0302, lng:138.7878, name:"大瀬崎", yomi:"おせざき", r:200, jit:0, note:"駿河湾に突き出た岬。海越しの富士山と、淡水の神池で知られる。ぬまづの宝100選No.011。"},
+  {lat:35.0880, lng:138.8569, name:"蛇松緑道", yomi:"じゃまつりょくどう", r:200, jit:0, note:"国鉄沼津港線の廃線跡を整備した緑の遊歩道。ぬまづの宝100選No.043。"},
+  {lat:35.0961, lng:138.8591, name:"御成橋", yomi:"おなりばし", r:150, jit:0, note:"狩野川にかかる、県東部初の鉄橋。御用邸へ向かう皇族にちなむ名。ぬまづの宝100選No.034。"},
+  {lat:35.0331, lng:138.8876, name:"淡島（内浦）", yomi:"あわしま", r:250, jit:0, note:"内浦の海に浮かぶ小島。水族館やホテルのあるリゾート地。ぬまづの宝100選No.004。"},
+  {lat:35.1415, lng:138.8072, name:"興国寺城跡", yomi:"こうこくじじょうあと", r:200, jit:0, note:"北条早雲が旗揚げした城の跡。国指定史跡。ぬまづの宝100選No.038。"},
+];
 const POINTS_PER_ROUND = 5000;
 const TANKA = [
   "千本の 松の梢に 風わたり\n沼津の海の 青を知るかな",
@@ -699,7 +718,7 @@ function poolIndices(){
   return NUMAZU_ANCHORS.map((a,i)=>i).filter(i=> difficulty==="easy" ? NUMAZU_ANCHORS[i].easy : true);
 }
 const MAX_ROUNDS = 5;
-const ROUND_SECONDS = 30;
+const ROUND_SECONDS = 60;
 let timerId=null, timeLeft=ROUND_SECONDS;
 
 function loadGoogle(key){
@@ -718,22 +737,32 @@ function shuffle(arr){
 }
 // 全17エリアをシャッフルし、10巡ぶんの出題エリアを作る（市全域まんべんなく）
 // 対戦時はホストが決めたインデックス配列(seed)を使い、両者で同じ出題に揃える。
+// 宝100選を含めた5問の並びを作る（2問は宝、残りは通常エリア）。
+// seedは「アンカーの並び」をそのまま配列で受け渡す（宝も通常も同じ形）。
+const TAKARA_PER_GAME = 2;
+function composeRoundAnchors(){
+  const takaraPick = shuffle(TAKARA_ANCHORS.slice()).slice(0, Math.min(TAKARA_PER_GAME, TAKARA_ANCHORS.length));
+  let pool=anchorPool();
+  const need=MAX_ROUNDS - takaraPick.length;
+  let areas=shuffle(pool.slice());
+  while(areas.length<need){ areas=areas.concat(shuffle(pool.slice())); }
+  areas=areas.slice(0, need);
+  // 宝と通常をまぜて、順番もシャッフル
+  return shuffle(takaraPick.concat(areas));
+}
 function buildRoundOrder(seed){
   if(seed && seed.length){
-    roundOrder = seed.map(i=>NUMAZU_ANCHORS[i] || NUMAZU_ANCHORS[0]);
+    roundOrder = seed.map(a=>a||NUMAZU_ANCHORS[0]);
     return;
   }
-  let pool=anchorPool();
-  let order=shuffle(pool);
-  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(pool)); }
-  roundOrder=order.slice(0,MAX_ROUNDS);
+  roundOrder = composeRoundAnchors();
 }
-// ホストが出題エリアの並び(インデックス配列)を生成
+// ホストが出題の並び（アンカーの配列）を生成。Firebaseにそのまま保存できる形にする。
 function makeSeedIndices(){
-  let idx=poolIndices();
-  let order=shuffle(idx);
-  while(order.length<MAX_ROUNDS){ order=order.concat(shuffle(idx)); }
-  return order.slice(0,MAX_ROUNDS);
+  return composeRoundAnchors().map(a=>({
+    lat:a.lat, lng:a.lng, name:a.name, yomi:a.yomi||"", r:a.r||500, jit:a.jit||0,
+    note: a.note || null
+  }));
 }
 // 指定エリアの周辺でストリートビューを探す。見つからなければ半径を段階的に広げる。
 function findPanoAt(sv, anchor){
@@ -747,13 +776,13 @@ function findPanoAt(sv, anchor){
       const radius=Math.min(baseR*(1+Math.floor(tries/4)), 3000); // 4回ごとに探索範囲拡大
       sv.getPanorama({location:{lat,lng}, radius, source:google.maps.StreetViewSource.OUTDOOR},
         (data,status)=>{
-        if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name,yomi:anchor.yomi}); }
+        if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null}); }
         else if(tries<30){ attempt(); }
         else {
           // それでも無ければ屋内含めて最後の探索、なお駄目なら沼津駅へ
           sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:3000},(d,s)=>{
-            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi});
-            else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺",yomi:"ぬまづえき しゅうへん"}));
+            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
+            else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺",yomi:"ぬまづえき しゅうへん",note:null}));
           });
         }
       });
@@ -798,7 +827,7 @@ async function startRound(){
   if(isVersus && sharedPanos && sharedPanos[round-1]){
     // 対戦：主催者が用意した共通の風景を使う（待たない＝固まらない）
     const v=sharedPanos[round-1];
-    found={panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||""};
+    found={panoId:v.panoId, pos:new google.maps.LatLng(v.lat,v.lng), hint:v.hint, yomi:v.yomi||"", note:v.note||null};
   } else {
     // 一人用、または万一panoが配られていない場合は自分で探す
     const sv=new google.maps.StreetViewService();
@@ -806,7 +835,7 @@ async function startRound(){
     found=await findPanoAt(sv, anchor);
   }
 
-  target={latLng:found.pos, hint:found.hint, yomi:found.yomi};
+  target={latLng:found.pos, hint:found.hint, yomi:found.yomi, note:found.note||null};
   pano.setPano(found.panoId);
   pano.setPov({heading:Math.random()*360, pitch:0});
   pano.setVisible(true);
@@ -867,17 +896,28 @@ function submitGuess(fromTimer=false, noAnswer=false){
   document.getElementById("distVal").textContent = (km===null) ? "—" : (km<1 ? Math.round(km*1000)+"m" : km.toFixed(2)+"km");
   document.getElementById("ptsVal").textContent=pts;
   setPlaceName(target.hint, target.yomi);
+  const tn=document.getElementById("takaraNote");
+  if(tn){
+    if(target.note){
+      tn.innerHTML = '<span class="badge">ぬまづの宝100選</span><br>'+escapeHtml(target.note);
+      tn.style.display="block";
+    } else {
+      tn.style.display="none";
+    }
+  }
   if(noAnswer || !guessLatLng){
     document.getElementById("resultTitle").textContent="時間切れ！";
   } else {
     document.getElementById("resultTitle").textContent = pts>=4500?"神業！":pts>=3500?"お見事":pts>=2000?"なかなか":pts>=800?"惜しい":"また挑戦！";
   }
-  geocoder.geocode({location:target.latLng, language:"ja"},(res,st)=>{
-    if(st==="OK"&&res[0]){
-      const c=res[0].address_components.find(x=>x.types.includes("sublocality")||x.types.includes("locality"));
-      if(c) setPlaceName("沼津市 "+c.long_name, target.yomi);
-    }
-  });
+  if(!target.note){
+    geocoder.geocode({location:target.latLng, language:"ja"},(res,st)=>{
+      if(st==="OK"&&res[0]){
+        const c=res[0].address_components.find(x=>x.types.includes("sublocality")||x.types.includes("locality"));
+        if(c) setPlaceName("沼津市 "+c.long_name, target.yomi);
+      }
+    });
+  }
   document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の問題へ →";
 
   if(isVersus){
@@ -1313,7 +1353,7 @@ async function lobbyStart(){
   for(let i=0;i<MAX_ROUNDS;i++){
     const anchor=roundOrder[i] || NUMAZU_ANCHORS[0];
     const f=await findPanoAt(sv, anchor);
-    panos.push({ panoId:f.panoId, lat:f.pos.lat(), lng:f.pos.lng(), hint:f.hint, yomi:f.yomi||"" });
+    panos.push({ panoId:f.panoId, lat:f.pos.lat(), lng:f.pos.lng(), hint:f.hint, yomi:f.yomi||"", note:f.note||null });
   }
   await roomRef.update({ panos: panos, started:true, state:"playing" });
 }
