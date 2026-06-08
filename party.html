@@ -684,14 +684,14 @@ const NUMAZU_ANCHORS = [
 ];
 // ぬまづの宝100選（ストリートビューで見えやすい場所を厳選）。位置は沼津市HPの地図より。
 const TAKARA_ANCHORS = [
-  {lat:35.0726, lng:138.8645, name:"牛臥山公園", yomi:"うしぶせやま こうえん", r:150, jit:0, note:"千本浜から御用邸へ続く海岸線を楽しめる海の公園。ぬまづの宝100選No.008。"},
-  {lat:35.1288, lng:138.8819, name:"門池", yomi:"かどいけ", r:200, jit:0, note:"約1.3kmの遊歩道で四季を感じられる憩いの池。ぬまづの宝100選No.012。"},
-  {lat:34.9762, lng:138.7653, name:"御浜岬（戸田）", yomi:"みはまみさき", r:200, jit:0, note:"砂れきが堆積してできた、戸田港を抱く岬。ジオサイト。ぬまづの宝100選No.029。"},
-  {lat:35.0302, lng:138.7878, name:"大瀬崎", yomi:"おせざき", r:200, jit:0, note:"駿河湾に突き出た岬。海越しの富士山と、淡水の神池で知られる。ぬまづの宝100選No.011。"},
-  {lat:35.0880, lng:138.8569, name:"蛇松緑道", yomi:"じゃまつりょくどう", r:200, jit:0, note:"国鉄沼津港線の廃線跡を整備した緑の遊歩道。ぬまづの宝100選No.043。"},
-  {lat:35.0961, lng:138.8591, name:"御成橋", yomi:"おなりばし", r:150, jit:0, note:"狩野川にかかる、県東部初の鉄橋。御用邸へ向かう皇族にちなむ名。ぬまづの宝100選No.034。"},
-  {lat:35.0331, lng:138.8876, name:"淡島（内浦）", yomi:"あわしま", r:250, jit:0, note:"内浦の海に浮かぶ小島。水族館やホテルのあるリゾート地。ぬまづの宝100選No.004。"},
-  {lat:35.1415, lng:138.8072, name:"興国寺城跡", yomi:"こうこくじじょうあと", r:200, jit:0, note:"北条早雲が旗揚げした城の跡。国指定史跡。ぬまづの宝100選No.038。"},
+  {lat:35.0726, lng:138.8645, name:"牛臥山公園", yomi:"うしぶせやま こうえん", r:50, jit:0, takara:true, note:"千本浜から御用邸へ続く海岸線を楽しめる海の公園。ぬまづの宝100選No.008。"},
+  {lat:35.1288, lng:138.8819, name:"門池", yomi:"かどいけ", r:50, jit:0, takara:true, note:"約1.3kmの遊歩道で四季を感じられる憩いの池。ぬまづの宝100選No.012。"},
+  {lat:34.9762, lng:138.7653, name:"御浜岬（戸田）", yomi:"みはまみさき", r:50, jit:0, takara:true, note:"砂れきが堆積してできた、戸田港を抱く岬。ジオサイト。ぬまづの宝100選No.029。"},
+  {lat:35.0302, lng:138.7878, name:"大瀬崎", yomi:"おせざき", r:50, jit:0, takara:true, note:"駿河湾に突き出た岬。海越しの富士山と、淡水の神池で知られる。ぬまづの宝100選No.011。"},
+  {lat:35.0880, lng:138.8569, name:"蛇松緑道", yomi:"じゃまつりょくどう", r:50, jit:0, takara:true, note:"国鉄沼津港線の廃線跡を整備した緑の遊歩道。ぬまづの宝100選No.043。"},
+  {lat:35.0961, lng:138.8591, name:"御成橋", yomi:"おなりばし", r:50, jit:0, takara:true, note:"狩野川にかかる、県東部初の鉄橋。御用邸へ向かう皇族にちなむ名。ぬまづの宝100選No.034。"},
+  {lat:35.0331, lng:138.8876, name:"淡島（内浦）", yomi:"あわしま", r:50, jit:0, takara:true, note:"内浦の海に浮かぶ小島。水族館やホテルのあるリゾート地。ぬまづの宝100選No.004。"},
+  {lat:35.1415, lng:138.8072, name:"興国寺城跡", yomi:"こうこくじじょうあと", r:50, jit:0, takara:true, note:"北条早雲が旗揚げした城の跡。国指定史跡。ぬまづの宝100選No.038。"},
 ];
 const POINTS_PER_ROUND = 5000;
 const TANKA = [
@@ -769,11 +769,34 @@ function buildRoundOrder(seed){
 function makeSeedIndices(){
   return composeRoundAnchors().map(a=>({
     lat:a.lat, lng:a.lng, name:a.name, yomi:a.yomi||"", r:a.r||500, jit:a.jit||0,
-    note: a.note || null
+    takara: a.takara||false, note: a.note || null
   }));
 }
 // 指定エリアの周辺でストリートビューを探す。見つからなければ半径を段階的に広げる。
 function findPanoAt(sv, anchor){
+  // 宝100選は「すぐそば」を出したいので、専用のていねいな探索（50mから少しずつ拡大）
+  if(anchor.takara){
+    return new Promise((resolve)=>{
+      const radii=[50,80,120,180,260,360]; // m。近いところから順に試す
+      let i=0;
+      const tryNext=()=>{
+        if(i>=radii.length){
+          // どうしても近くに無ければ、宝の座標そのものを中心に最後の探索
+          sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:500},(d,s)=>{
+            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
+            else resolve({panoId:null,pos:new google.maps.LatLng(anchor.lat,anchor.lng),hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
+          });
+          return;
+        }
+        sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:radii[i], source:google.maps.StreetViewSource.OUTDOOR},
+          (data,status)=>{
+            if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null}); }
+            else { i++; tryNext(); }
+          });
+      };
+      tryNext();
+    });
+  }
   return new Promise((resolve)=>{
     let tries=0;
     const baseR=anchor.r||500, jit=anchor.jit||0.012;
@@ -844,7 +867,15 @@ async function startRound(){
   }
 
   target={latLng:found.pos, hint:found.hint, yomi:found.yomi, note:found.note||null};
-  pano.setPano(found.panoId);
+  if(!found.panoId){
+    // 万一パノラマIDが無いときは、その地点の近くを最後にもう一度だけ探す
+    try{
+      const sv2=new google.maps.StreetViewService();
+      const d=await new Promise(res=>sv2.getPanorama({location:{lat:found.pos.lat(),lng:found.pos.lng()},radius:1000},(r,s)=>res(s==="OK"?r:null)));
+      if(d) found.panoId=d.location.pano;
+    }catch(e){}
+  }
+  if(found.panoId) pano.setPano(found.panoId);
   pano.setPov({heading:Math.random()*360, pitch:0});
   pano.setVisible(true);
   map.setCenter(NUMAZU.center); map.setZoom(12);
