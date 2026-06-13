@@ -918,9 +918,13 @@ function updateTimerUI(){
   document.getElementById("timerNum").textContent=timeLeft;
   document.getElementById("timer").classList.toggle("warn", timeLeft<=10);
 }
+// 難易度ごとの制限時間（むずかしいは短く30秒）
+function roundSeconds(){
+  return difficulty==="hard" ? 30 : ROUND_SECONDS;
+}
 function startTimer(){
   stopTimer();
-  timeLeft=ROUND_SECONDS;
+  timeLeft=roundSeconds();
   document.getElementById("timer").style.display="flex";
   updateTimerUI();
   timerId=setInterval(()=>{
@@ -1144,7 +1148,7 @@ function setPlaceName(name, yomi){
   }
 }
 function rankFor(pct){
-  if(pct>=0.92) return {name:"河内大杉の神", yomi:"こうちおおすぎ の かみ"};
+  if(pct>=0.92) return {name:"河内大杉の神", yomi:"こうちのおおすぎのかみ"};
   if(pct>=0.84) return {name:"水神社の龍", yomi:"すいじんじゃ の りゅう"};
   if(pct>=0.74) return {name:"駿河湾の主", yomi:"するがわん の ぬし"};
   if(pct>=0.64) return {name:"御用邸の門番", yomi:"ごようてい の もんばん"};
@@ -1378,7 +1382,7 @@ async function hostGo(){
   const seed=makeSeedIndices();
   await roomRef.set({
     createdAt: firebase.database.ServerValue.TIMESTAMP,
-    seed: seed, state:"lobby", started:false,
+    seed: seed, diff: difficulty, state:"lobby", started:false,
     players: { [myId]:{ name:myName, total:0, round:0, ready:false, alive:true, host:true } }
   });
   // 主催者が切断しても部屋は消さない（瞬断で全員が固まるのを防ぐ）。
@@ -1419,6 +1423,7 @@ async function joinRoom(){
   isVersus=true; isHost=false;
   roomId=code; roomRef=ref;
   myId="p"+Date.now().toString(36)+Math.floor(Math.random()*1000);
+  if(data.diff){ difficulty=data.diff; } // ホストの難易度（制限時間や出題に反映）
   buildRoundOrder(data.seed);
   await roomRef.child("players/"+myId).set({ name:myName, total:0, round:0, ready:false, alive:true });
   // 切断したら自分を「抜けた」印に（待ち合わせで無視される）
@@ -1532,7 +1537,7 @@ function setDifficulty(d){
   document.getElementById("diffTakara").classList.toggle("active", d==="takara");
   let note;
   if(d==="easy") note="中心部や港など、わかりやすい場所から出題します";
-  else if(d==="hard") note="戸田・西浦・浮島など、市内全域から出題します（上級）";
+  else if(d==="hard") note="山間部を含めた市内すみずみから出題（上級・制限時間30秒）";
   else note="ぬまづの宝100選だけを巡る、沼津の宝めぐりモード";
   document.getElementById("diffNote").textContent=note;
 }
