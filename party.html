@@ -34,9 +34,10 @@
   /* ===== 対戦版 追加スタイル ===== */
   .mode-row { display:flex; gap:10px; margin:14px 0 4px; }
   .mode-btn {
-    flex:1; padding:13px 8px; border:none; border-radius:14px; cursor:pointer;
-    font-family:inherit; font-size:15px; font-weight:bold; color:var(--ink);
+    flex:1; padding:13px 6px; border:none; border-radius:14px; cursor:pointer;
+    font-family:inherit; font-size:14.5px; font-weight:bold; color:var(--ink);
     background:var(--paper); box-shadow:0 3px 0 rgba(0,0,0,0.18); transition:transform .1s;
+    white-space:nowrap; line-height:1.35; text-align:center;
   }
   .mode-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.18); }
   .mode-btn.sub { background:var(--sky2); }
@@ -530,15 +531,15 @@
       <div class="period" id="periodNote"></div>
       <button class="btn btn-start" id="startBtn">ひとりであそぶ</button>
       <div class="mode-row">
-        <button class="mode-btn" id="createBtn">みんなであそぶ（主催）</button>
-        <button class="mode-btn sub" id="joinBtn">あいことばで参加</button>
+        <button class="mode-btn" id="createBtn">みんなであそぶ<br>（主催）</button>
+        <button class="mode-btn sub" id="joinBtn">あいことばで<br>参加</button>
       </div>
       <div class="diff-card">
         <div class="diff-row">
           <span class="diff-label">モード</span>
           <button class="diff-btn active" id="diffEasy">やさしい</button>
           <button class="diff-btn" id="diffHard">むずかしい</button>
-          <button class="diff-btn" id="diffTakara">宝100選</button>
+          <button class="diff-btn" id="diffTakara">ぬまづの宝100選</button>
         </div>
         <div class="diff-note" id="diffNote">中心部や港など、わかりやすい場所から出題します</div>
       </div>
