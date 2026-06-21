@@ -748,6 +748,7 @@ let playersCache={};     // 全プレイヤーの最新状態 {id:{name,total,ro
 let lobbyReady=false;    // 主催者がスタートを押したか
 let syncTimer=null;      // 待ち合わせのタイムアウト用
 let sharedPanos=null;    // 主催者が用意した5問ぶんの風景（全員共通）
+let myReview=[];         // 一人用の各問記録（振り返り用）
 
 const NUMAZU = { center:{lat:35.0960, lng:138.8634} };
 // 各地区の代表地点。r = 探索半径(m)。郊外・海岸部はストリートビューが
@@ -1151,6 +1152,15 @@ function submitGuess(fromTimer=false, noAnswer=false){
   }
   document.getElementById("nextBtn").textContent = round>=MAX_ROUNDS ? "結果を見る →" : "次の問題へ →";
 
+  if(!isVersus){
+    const g = guessLatLng ? {lat:guessLatLng.lat(), lng:guessLatLng.lng()} : null;
+    myReview[round-1] = {
+      lat: target.latLng.lat(), lng: target.latLng.lng(),
+      hint: target.hint||"", note: target.note||null,
+      myLat: g?g.lat:null, myLng: g?g.lng:null, pts: pts
+    };
+  }
+
   if(isVersus){
     // 自分のこの問の得点・累計・回答地点をみんなに共有（振り返りにも使う）
     const g = guessLatLng ? {lat:guessLatLng.lat(), lng:guessLatLng.lng()} : null;
@@ -1314,7 +1324,7 @@ function showFinal(){
     verdict.style.display="none"; vsRow.style.display="none";
     document.getElementById("finalBoard").style.display="none";
     document.getElementById("restartBtn").style.display="";
-    const rb=document.getElementById("reviewBtn"); if(rb) rb.style.display="none";
+    const rb=document.getElementById("reviewBtn"); if(rb) rb.style.display = (myReview.length? "":"none");
     showBestScore();
   }
   document.getElementById("finalOverlay").classList.add("show");
@@ -1372,16 +1382,27 @@ function showBestScore(){
 }
 // ===== ふりかえり：全5問の正解とみんなの回答地点を地図で表示 =====
 const REVIEW_COLORS = ["#2d8e6a","#8e5a2d","#6a2d8e","#2d6a8e","#8e2d5a","#5a8e2d","#2d2d8e"];
+function reviewCorrect(r){
+  if(isVersus) return sharedPanos && sharedPanos[r-1];
+  return myReview[r-1] || null;
+}
 function showReview(){
   document.getElementById("finalOverlay").classList.remove("show");
   const list=document.getElementById("reviewList");
   list.innerHTML="";
-  const players=Object.entries(playersCache||{}).filter(([id,p])=>p && p.alive!==false);
+  let players;
+  if(isVersus){
+    players=Object.entries(playersCache||{}).filter(([id,p])=>p && p.alive!==false);
+  } else {
+    const gs={};
+    for(let i=0;i<MAX_ROUNDS;i++){ const v=myReview[i]; if(v) gs[i+1]={lat:v.myLat,lng:v.myLng,pts:v.pts}; }
+    players=[[myId||"me",{name:"あなた",alive:true,guesses:gs}]];
+  }
   // 各問ぶんの枠を先に作る
   for(let r=1;r<=MAX_ROUNDS;r++){
     const wrap=document.createElement("div");
     wrap.className="review-q";
-    const correct = sharedPanos && sharedPanos[r-1];
+    const correct = reviewCorrect(r);
     const hintTxt = correct ? (correct.hint||"") : "";
     // 宝100選の地点なら、その地点の写真も添える（学習用）
     const tno = correct && correct.note ? takaraNoFromNote(correct.note) : null;
@@ -1398,7 +1419,7 @@ function showReview(){
   if(list) list.scrollTop=0;
   // 地図を順に描く
   for(let r=1;r<=MAX_ROUNDS;r++){
-    const correct = sharedPanos && sharedPanos[r-1];
+    const correct = reviewCorrect(r);
     if(!correct) continue;
     const center={lat:correct.lat, lng:correct.lng};
     const m=new google.maps.Map(document.getElementById("qmap"+r),{center:center,zoom:13,disableDefaultUI:true,gestureHandling:"none"});
@@ -1438,7 +1459,7 @@ function closeReview(){
   document.getElementById("finalOverlay").classList.add("show");
 }
 function restart(){
-  total=0; round=0;
+  myReview=[]; total=0; round=0;
   buildRoundOrder();
   document.getElementById("totalScore").textContent="0";
   document.getElementById("finalOverlay").classList.remove("show");
