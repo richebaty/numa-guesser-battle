@@ -242,6 +242,7 @@
   .review-photo-cap { font-size:12px; color:var(--sea-deep); text-align:left; margin:5px 2px 0; font-weight:600; }
   .review-photo-cap .pno { display:inline-block; background:var(--gold); color:#5a4a1a; border-radius:999px; padding:1px 9px; font-size:11px; margin-right:6px; }
   .review-legend .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin:0 4px 0 10px; vertical-align:middle; }
+  .review-legend .pin{display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:9px solid #2d6a8e;margin:0 4px 0 10px;vertical-align:middle;}
   .stat-row { display:flex; justify-content:space-around; margin-bottom:16px; }
   .stat .n { font-size:26px; font-weight:700; font-family:"Helvetica Neue",sans-serif; color:var(--sea-deep); }
   .stat .l { font-size:10px; letter-spacing:2px; color:rgba(26,38,52,0.55); }
@@ -1409,7 +1410,7 @@ function showReview(){
       zIndex:999, title:"正解"});
     bounds.extend(correctPos);
     // 各プレイヤーの回答地点
-    let legend=`<span><span class="dot" style="background:#2d6a8e;"></span>正解</span>`;
+    let legend=`<span><span class="pin"></span>正解</span>`;
     players.forEach(([id,p],idx)=>{
       const g = p.guesses && p.guesses[r];
       if(!g || g.lat==null || g.lng==null) return;
