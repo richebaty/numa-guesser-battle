@@ -337,6 +337,11 @@
     .photo-reveal-inner { max-width:900px; }
     .photo-reveal img { max-height:80vh; }
   }
+  /* タブレット横向き（4:3〜16:10未満）：中央寄せ時の上寄りを補正し上下バランスを整える */
+  @media (min-aspect-ratio:1/1) and (max-aspect-ratio:16/10){
+    .splash-content { transform:translateY(2.5vh); padding-bottom:0; gap:22px; }
+    .title-card { margin-bottom:14px; }
+  }
   @media (min-aspect-ratio:16/10){
     .splash-content { transform:translateY(4vh); }
     .splash h1 { font-size:54px; }
