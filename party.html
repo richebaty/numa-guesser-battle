@@ -351,19 +351,10 @@
   }
   @keyframes floaty { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-10px)} }
   /* Mt Fuji */
-  .fuji {
-    position:absolute; bottom:24%; left:26%; transform:translateX(-50%);
-    width:0; height:0; border-left:185px solid transparent;
-    border-right:185px solid transparent; border-bottom:210px solid #5a7d97;
-    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12));
-  }
-  .fuji::after {
-    content:""; position:absolute; left:-64px; top:0; width:128px; height:64px;
-    background:#fbf7ef; clip-path:polygon(50% 0, 78% 60%, 62% 48%, 50% 70%, 38% 48%, 22% 60%);
-  }
+  .fuji { display:none; }
   /* 沼津港のシンボル「びゅうお」水門（右側）。両側の塔＋上部の展望回廊。 */
   .byuo {
-    position:absolute; right:14%; bottom:24%; width:96px; height:118px;
+    position:absolute; right:14%; bottom:37%; width:96px; height:118px;
     filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12)); z-index:3;
   }
   .byuo .tower {
@@ -385,14 +376,14 @@
   }
   /* 港の街並みシルエット（びゅうおの足元） */
   .town {
-    position:absolute; right:2%; bottom:27%; display:flex; align-items:flex-end; gap:3px; z-index:2; opacity:.92;
+    position:absolute; right:2%; bottom:38%; display:flex; align-items:flex-end; gap:3px; z-index:2; opacity:.92;
   }
   .town span { display:block; width:14px; background:#6c8597; border-radius:2px 2px 0 0; }
   .town .b1{height:26px;} .town .b2{height:38px;} .town .b3{height:20px;}
   .town .b4{height:32px;width:18px;} .town .b5{height:16px;}
   /* sea */
   .sea-band {
-    position:absolute; bottom:0; left:0; right:0; height:30%;
+    position:absolute; bottom:0; left:0; right:0; height:38%;
     background:linear-gradient(180deg, var(--sea) 0%, var(--sea-deep) 100%);
   }
   .wave {
@@ -400,26 +391,47 @@
     background:radial-gradient(circle at 12px -6px, transparent 12px, var(--paper) 13px) repeat-x;
     background-size:24px 22px; opacity:.25;
   }
-  .wave.w1 { bottom:28%; animation:drift 6s linear infinite; }
-  .wave.w2 { bottom:24%; opacity:.15; animation:drift 9s linear infinite reverse; }
+  .wave.w1 { bottom:36%; animation:drift 6s linear infinite; }
+  .wave.w2 { bottom:32%; opacity:.15; animation:drift 9s linear infinite reverse; }
   @keyframes drift { from{background-position:0 0} to{background-position:48px 0} }
   /* little boat */
-  .boat { position:absolute; bottom:20%; font-size:30px; animation:sail 8s ease-in-out infinite; }
+  .boat { position:absolute; bottom:30%; font-size:46px; animation:sail 6.5s ease-in-out infinite; z-index:4; }
   @keyframes sail { 0%{left:-12%} 100%{left:108%} }
-  .mtns{ position:absolute; left:0; right:0; bottom:24%; height:26%; z-index:1; opacity:0; transition:opacity .5s; pointer-events:none; }
-  .mtns svg{ position:absolute; left:0; right:0; width:100%; }
-  .mtn-far{ bottom:0; height:95%; }
-  .mtn-near{ bottom:0; height:62%; }
-  .splash.hard-on .mtns{ opacity:1; }
-  .fboat{ position:absolute; bottom:14%; opacity:0; white-space:nowrap; z-index:4; }
-  .fboat.fb1{ animation:sailF1 11s linear infinite; }
-  .fboat.fb2{ animation:sailF2 14s linear infinite; bottom:9%; transform:scale(1.25); }
+  .scape{ position:absolute; left:0; right:0; bottom:37%; height:54%; z-index:1; pointer-events:none; }
+  .scape-svg{ position:absolute; left:0; right:0; bottom:0; width:100%; height:100%; }
+  .fboat{ position:absolute; bottom:26%; opacity:0; white-space:nowrap; z-index:4; transform:scale(1.35); }
+  .fboat.fb1{ animation:sailF1 9s linear infinite; }
+  .fboat.fb2{ animation:sailF2 12s linear infinite; bottom:18%; transform:scale(1.7); }
   @keyframes sailF1 { 0%{left:108%} 100%{left:-14%} }
   @keyframes sailF2 { 0%{left:-14%} 100%{left:110%} }
   .splash.hard-on .fboat{ opacity:1; transition:opacity .5s; }
+  /* カモメの群れ（むずかしいモード）：横に流れつつ上下 */
+  .gulls{ position:absolute; top:12%; left:0; width:100%; height:42%; z-index:4; opacity:0; pointer-events:none; }
+  .splash.hard-on .gulls{ opacity:1; transition:opacity .6s; animation:gullFlock 20s linear infinite; }
+  @keyframes gullFlock{ 0%{transform:translateX(-15%)} 100%{transform:translateX(115%)} }
+  .gull{ position:absolute; width:26px; height:13px; }
+  .gull::before,.gull::after{ content:""; position:absolute; top:2px; width:13px; height:13px;
+    border-top:3px solid #ffffff; border-radius:50% 50% 0 0;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,0.18)); }
+  .gull::before{ left:0; transform:rotate(8deg); }
+  .gull::after{ right:0; transform:rotate(-8deg); }
+  .gull.g1{ left:0%;  top:18%; transform:scale(1.1); }
+  .gull.g2{ left:6%;  top:32%; transform:scale(0.8); }
+  .gull.g3{ left:11%; top:10%; transform:scale(1.25);}
+  .gull.g4{ left:15%; top:42%; transform:scale(0.65);}
+  .gull.g5{ left:20%; top:24%; transform:scale(0.95);}
+  .gull.g6{ left:25%; top:50%; transform:scale(0.7); }
+  .gull.g7{ left:29%; top:16%; transform:scale(1.05);}
+  .gull.g8{ left:34%; top:36%; transform:scale(0.85);}
+  .gull.g9{ left:38%; top:6%;  transform:scale(0.6); }
+  .gull.g10{ left:42%; top:28%; transform:scale(1.15);}
+  .gull.g11{ left:47%; top:46%; transform:scale(0.75);}
+  .gull.g12{ left:52%; top:20%; transform:scale(0.9); }
   /* pine */
-  .pine { position:absolute; bottom:27%; font-size:34px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.15)); }
-  .pine.p1 { left:10%; } .pine.p2 { right:2%; font-size:24px; bottom:24%; }
+  .pinewood{ position:absolute; left:0; bottom:37%; width:62%; height:26px; z-index:2; background:radial-gradient(circle at 8px 0, #5e8466 9px, transparent 10px) repeat-x; background-size:18px 26px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.15)); }
+  .pinewood::after{ content:""; position:absolute; left:0; bottom:-6px; width:100%; height:10px; background:#587e5f; }
+  .pine { position:absolute; bottom:38%; font-size:30px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.15)); z-index:2; }
+  .pine.p1 { left:8%; } .pine.p2 { left:34%; font-size:26px; bottom:38%; }
 
   .splash-content {
     position:relative; z-index:5; width:100%;
@@ -609,13 +621,16 @@
     <div class="takara-credit" id="takaraCredit">河内の大スギ（西浦河内）</div>
     <div class="photo-credit-splash">写真提供：沼津市</div>
     <div class="sun"></div>
-    <div class="fuji"></div>
-    <div class="mtns" id="mtns">
-      <svg class="mtn-far" viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,200 L0,130 L80,90 L160,30 L250,95 L330,70 L430,110 L540,85 L660,120 L780,100 L900,125 L1040,105 L1200,130 L1200,200 Z" fill="#8fa98a"/>
-      </svg>
-      <svg class="mtn-near" viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M520,200 L520,150 L580,120 L640,145 L710,110 L780,140 L850,115 L930,145 L1010,118 L1090,142 L1160,120 L1200,135 L1200,200 Z" fill="#6e8f6c"/>
+    <div class="scape" id="scape">
+      <svg class="scape-svg" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+        <!-- 富士山＋長い裾野（中央やや左） -->
+        <path d="M0,360 L0,300 Q120,250 250,210 Q360,180 430,120 L470,78 Q500,52 540,78 L590,128 Q660,190 770,215 Q900,245 1010,265 L1200,300 L1200,360 Z" fill="#5f7f99"/>
+        <!-- 雪冠 -->
+        <path d="M470,78 Q500,52 540,78 L560,98 Q540,92 525,104 Q512,94 500,106 Q488,96 478,106 Q468,96 458,100 Z" fill="#fbf7ef"/>
+        <!-- 愛鷹山（富士の右に連なる、なだらかな丸い稜線） -->
+        <path d="M640,360 L640,250 Q720,205 800,225 Q860,240 900,210 Q960,225 1010,250 Q1090,235 1160,255 L1200,250 L1200,360 Z" fill="#6f8f86"/>
+        <!-- 沼津アルプス（手前・右の低い連なり） -->
+        <path d="M560,360 L560,300 Q620,270 680,295 Q740,272 810,298 Q880,275 950,300 Q1030,278 1100,300 L1200,290 L1200,360 Z" fill="#5e7e6a"/>
       </svg>
     </div>
     <div class="town"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="b5"></span></div>
@@ -625,11 +640,18 @@
       <div class="gate"></div>
       <div class="deck"></div>
     </div>
+    <div class="pinewood" id="pinewood"></div>
     <div class="pine p1">🌲</div>
     <div class="pine p2">🌲</div>
     <div class="sea-band"></div>
     <div class="wave w1"></div>
     <div class="wave w2"></div>
+    <div class="gulls" id="gulls">
+      <span class="gull g1"></span><span class="gull g2"></span><span class="gull g3"></span>
+      <span class="gull g4"></span><span class="gull g5"></span><span class="gull g6"></span>
+      <span class="gull g7"></span><span class="gull g8"></span><span class="gull g9"></span>
+      <span class="gull g10"></span><span class="gull g11"></span><span class="gull g12"></span>
+    </div>
     <div class="boat">⛵</div>
     <div class="fboat fb1"><svg viewBox="0 0 120 80" width="64" height="43" xmlns="http://www.w3.org/2000/svg"><line x1="46" y1="50" x2="46" y2="8" stroke="#6b5b4a" stroke-width="2"/><line x1="70" y1="50" x2="70" y2="14" stroke="#6b5b4a" stroke-width="2"/><polygon points="46,8 30,12 46,18" fill="#e23b3b"/><polygon points="46,16 28,21 46,26" fill="#2e7bbf"/><polygon points="46,24 31,29 46,33" fill="#f5c542"/><polygon points="70,14 56,18 70,23" fill="#3aa657"/><polygon points="70,22 55,26 70,30" fill="#e23b3b"/><polygon points="70,29 58,33 70,37" fill="#9b59b6"/><path d="M84,16 q10,-3 20,0 q-10,3 -20,0Z" fill="#f5c542" stroke="#e23b3b" stroke-width="0.6"/><path d="M18,50 L96,50 L88,64 L26,64 Z" fill="#ffffff" stroke="#9bb0bd" stroke-width="1.5"/><rect x="40" y="42" width="34" height="9" fill="#eef3f5" stroke="#9bb0bd" stroke-width="1"/><path d="M14,62 q6,-4 12,0 q6,4 12,0" fill="none" stroke="#cfe3ee" stroke-width="2"/></svg></div>
     <div class="fboat fb2"><svg viewBox="0 0 120 80" width="64" height="43" xmlns="http://www.w3.org/2000/svg"><line x1="46" y1="50" x2="46" y2="8" stroke="#6b5b4a" stroke-width="2"/><line x1="70" y1="50" x2="70" y2="14" stroke="#6b5b4a" stroke-width="2"/><polygon points="46,8 30,12 46,18" fill="#e23b3b"/><polygon points="46,16 28,21 46,26" fill="#2e7bbf"/><polygon points="46,24 31,29 46,33" fill="#f5c542"/><polygon points="70,14 56,18 70,23" fill="#3aa657"/><polygon points="70,22 55,26 70,30" fill="#e23b3b"/><polygon points="70,29 58,33 70,37" fill="#9b59b6"/><path d="M84,16 q10,-3 20,0 q-10,3 -20,0Z" fill="#f5c542" stroke="#e23b3b" stroke-width="0.6"/><path d="M18,50 L96,50 L88,64 L26,64 Z" fill="#ffffff" stroke="#9bb0bd" stroke-width="1.5"/><rect x="40" y="42" width="34" height="9" fill="#eef3f5" stroke="#9bb0bd" stroke-width="1"/><path d="M14,62 q6,-4 12,0 q6,4 12,0" fill="none" stroke="#cfe3ee" stroke-width="2"/></svg></div>
