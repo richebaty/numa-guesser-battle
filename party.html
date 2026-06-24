@@ -337,10 +337,15 @@
     .photo-reveal-inner { max-width:900px; }
     .photo-reveal img { max-height:80vh; }
   }
-  /* タブレット横向き（4:3〜16:10未満）：中央寄せ時の上寄りを補正し上下バランスを整える */
+  /* タブレット縦向き（やや縦長〜正方形手前）：下寄せ時にカードが富士山と重ならないよう全体を少し上げ余白を整える */
+  @media (max-aspect-ratio:1/1) and (min-width:700px){
+    .splash-content { transform:translateY(-4vh); gap:20px; }
+    .title-card { margin-bottom:18px; }
+  }
+  /* タブレット横向き（正方形〜16:10未満）：中央寄せで上に詰まるのを補正し、やや下へ */
   @media (min-aspect-ratio:1/1) and (max-aspect-ratio:16/10){
-    .splash-content { transform:translateY(2.5vh); padding-bottom:0; gap:22px; }
-    .title-card { margin-bottom:14px; }
+    .splash-content { transform:translateY(7vh); gap:20px; }
+    .title-card { margin-bottom:16px; }
   }
   @media (min-aspect-ratio:16/10){
     .splash-content { transform:translateY(4vh); }
