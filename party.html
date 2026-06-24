@@ -364,7 +364,7 @@
   /* 沼津港のシンボル「びゅうお」水門（右側）。両側の塔＋上部の展望回廊。 */
   .byuo {
     position:absolute; right:14%; bottom:24%; width:96px; height:118px;
-    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12)); z-index:2;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,0.12)); z-index:3;
   }
   .byuo .tower {
     position:absolute; bottom:0; width:20px; height:100px; background:#fbf7ef; border:1.5px solid #9bb0bd; border-radius:3px 3px 0 0;
@@ -385,7 +385,7 @@
   }
   /* 港の街並みシルエット（びゅうおの足元） */
   .town {
-    position:absolute; right:2%; bottom:27%; display:flex; align-items:flex-end; gap:3px; z-index:1; opacity:.92;
+    position:absolute; right:2%; bottom:27%; display:flex; align-items:flex-end; gap:3px; z-index:2; opacity:.92;
   }
   .town span { display:block; width:14px; background:#6c8597; border-radius:2px 2px 0 0; }
   .town .b1{height:26px;} .town .b2{height:38px;} .town .b3{height:20px;}
@@ -406,6 +406,20 @@
   /* little boat */
   .boat { position:absolute; bottom:20%; font-size:30px; animation:sail 8s ease-in-out infinite; }
   @keyframes sail { 0%{left:-12%} 100%{left:108%} }
+  .mtns{ position:absolute; left:0; right:0; bottom:26%; height:22%; z-index:1; opacity:0; transition:opacity .5s; pointer-events:none; }
+  .mtn{ position:absolute; bottom:0; width:0; height:0; border-style:solid; border-color:transparent; }
+  .mtn.m1{ left:2%;  border-width:0 70px 90px 70px;  border-bottom-color:#7fa07a; }
+  .mtn.m2{ left:16%; border-width:0 95px 130px 95px; border-bottom-color:#6b9070; }
+  .mtn.m3{ left:38%; border-width:0 80px 110px 80px; border-bottom-color:#79997a; }
+  .mtn.m4{ left:60%; border-width:0 110px 150px 110px;border-bottom-color:#638268; }
+  .mtn.m5{ left:80%; border-width:0 85px 115px 85px; border-bottom-color:#729877; }
+  .splash.hard-on .mtns{ opacity:1; }
+  .fboat{ position:absolute; bottom:14%; opacity:0; white-space:nowrap; z-index:4; }
+  .fboat.fb1{ animation:sailF1 11s linear infinite; }
+  .fboat.fb2{ animation:sailF2 14s linear infinite; bottom:9%; transform:scale(1.25); }
+  @keyframes sailF1 { 0%{left:108%} 100%{left:-14%} }
+  @keyframes sailF2 { 0%{left:-14%} 100%{left:110%} }
+  .splash.hard-on .fboat{ opacity:1; transition:opacity .5s; }
   /* pine */
   .pine { position:absolute; bottom:27%; font-size:34px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.15)); }
   .pine.p1 { left:10%; } .pine.p2 { right:2%; font-size:24px; bottom:24%; }
@@ -599,6 +613,10 @@
     <div class="photo-credit-splash">写真提供：沼津市</div>
     <div class="sun"></div>
     <div class="fuji"></div>
+    <div class="mtns" id="mtns">
+      <div class="mtn m1"></div><div class="mtn m2"></div><div class="mtn m3"></div>
+      <div class="mtn m4"></div><div class="mtn m5"></div>
+    </div>
     <div class="town"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="b5"></span></div>
     <div class="byuo">
       <div class="tower l"></div>
@@ -612,6 +630,8 @@
     <div class="wave w1"></div>
     <div class="wave w2"></div>
     <div class="boat">⛵</div>
+    <div class="fboat fb1"><svg viewBox="0 0 120 80" width="64" height="43" xmlns="http://www.w3.org/2000/svg"><line x1="46" y1="50" x2="46" y2="8" stroke="#6b5b4a" stroke-width="2"/><line x1="70" y1="50" x2="70" y2="14" stroke="#6b5b4a" stroke-width="2"/><polygon points="46,8 30,12 46,18" fill="#e23b3b"/><polygon points="46,16 28,21 46,26" fill="#2e7bbf"/><polygon points="46,24 31,29 46,33" fill="#f5c542"/><polygon points="70,14 56,18 70,23" fill="#3aa657"/><polygon points="70,22 55,26 70,30" fill="#e23b3b"/><polygon points="70,29 58,33 70,37" fill="#9b59b6"/><path d="M84,16 q10,-3 20,0 q-10,3 -20,0Z" fill="#f5c542" stroke="#e23b3b" stroke-width="0.6"/><path d="M18,50 L96,50 L88,64 L26,64 Z" fill="#ffffff" stroke="#9bb0bd" stroke-width="1.5"/><rect x="40" y="42" width="34" height="9" fill="#eef3f5" stroke="#9bb0bd" stroke-width="1"/><path d="M14,62 q6,-4 12,0 q6,4 12,0" fill="none" stroke="#cfe3ee" stroke-width="2"/></svg></div>
+    <div class="fboat fb2"><svg viewBox="0 0 120 80" width="64" height="43" xmlns="http://www.w3.org/2000/svg"><line x1="46" y1="50" x2="46" y2="8" stroke="#6b5b4a" stroke-width="2"/><line x1="70" y1="50" x2="70" y2="14" stroke="#6b5b4a" stroke-width="2"/><polygon points="46,8 30,12 46,18" fill="#e23b3b"/><polygon points="46,16 28,21 46,26" fill="#2e7bbf"/><polygon points="46,24 31,29 46,33" fill="#f5c542"/><polygon points="70,14 56,18 70,23" fill="#3aa657"/><polygon points="70,22 55,26 70,30" fill="#e23b3b"/><polygon points="70,29 58,33 70,37" fill="#9b59b6"/><path d="M84,16 q10,-3 20,0 q-10,3 -20,0Z" fill="#f5c542" stroke="#e23b3b" stroke-width="0.6"/><path d="M18,50 L96,50 L88,64 L26,64 Z" fill="#ffffff" stroke="#9bb0bd" stroke-width="1.5"/><rect x="40" y="42" width="34" height="9" fill="#eef3f5" stroke="#9bb0bd" stroke-width="1"/><path d="M14,62 q6,-4 12,0 q6,4 12,0" fill="none" stroke="#cfe3ee" stroke-width="2"/></svg></div>
     <div class="splash-content">
       <div class="title-card">
         <h1>ぬまゲッサー</h1>
@@ -1705,6 +1725,7 @@ function setDifficulty(d){
   // 宝100選モードのときだけ、河内の大スギの写真を背景に
   const sp=document.getElementById("splash");
   if(sp) sp.classList.toggle("takara-on", d==="takara");
+  if(sp) sp.classList.toggle("hard-on", d==="hard");
 }
 document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
 document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
