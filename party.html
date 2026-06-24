@@ -286,7 +286,8 @@
   .splash.takara-on .takara-credit{ opacity:1; }
   .splash.takara-on .sun,.splash.takara-on .fuji,.splash.takara-on .town,
   .splash.takara-on .byuo,.splash.takara-on .pine,.splash.takara-on .sea-band,
-  .splash.takara-on .wave,.splash.takara-on .boat{ opacity:0; transition:opacity .4s; }
+  .splash.takara-on .wave,.splash.takara-on .boat,.splash.takara-on .scape,
+  .splash.takara-on .pinewood,.splash.takara-on .fboat,.splash.takara-on .gulls{ opacity:0; transition:opacity .4s; }
 
   /* ===== 宝100選 正解写真リビール ===== */
   .photo-reveal {
@@ -407,12 +408,13 @@
   .splash.hard-on .fboat{ opacity:1; transition:opacity .5s; }
   /* カモメの群れ（むずかしいモード）：横に流れつつ上下 */
   .gulls{ position:absolute; top:12%; left:0; width:100%; height:42%; z-index:4; opacity:0; pointer-events:none; }
-  .splash.hard-on .gulls{ opacity:1; transition:opacity .6s; animation:gullFlock 20s linear infinite; }
-  @keyframes gullFlock{ 0%{transform:translateX(-15%)} 100%{transform:translateX(115%)} }
-  .gull{ position:absolute; width:26px; height:13px; }
-  .gull::before,.gull::after{ content:""; position:absolute; top:2px; width:13px; height:13px;
-    border-top:3px solid #ffffff; border-radius:50% 50% 0 0;
-    filter:drop-shadow(0 1px 1px rgba(0,0,0,0.18)); }
+  .splash.hard-on .gulls{ opacity:1; transition:opacity .6s; animation:gullFlock 12s linear infinite, gullBob 2.2s ease-in-out infinite; }
+  @keyframes gullFlock{ 0%{margin-left:-15%} 100%{margin-left:115%} }
+  @keyframes gullBob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+  .gull{ position:absolute; width:36px; height:18px; }
+  .gull::before,.gull::after{ content:""; position:absolute; top:2px; width:18px; height:18px;
+    border-top:4px solid #ffffff; border-radius:50% 50% 0 0;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,0.22)); }
   .gull::before{ left:0; transform:rotate(8deg); }
   .gull::after{ right:0; transform:rotate(-8deg); }
   .gull.g1{ left:0%;  top:18%; transform:scale(1.1); }
@@ -468,19 +470,19 @@
   }
   .diff-card {
     margin-top:16px; background:rgba(255,255,255,0.82);
-    border-radius:18px; padding:12px 16px; backdrop-filter:blur(2px);
+    border-radius:20px; padding:16px 20px; backdrop-filter:blur(2px);
     box-shadow:0 4px 14px rgba(45,106,142,0.15);
   }
-  .diff-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
-  .diff-label { font-size:12px; color:var(--sea-deep); font-weight:700; margin-right:2px; }
+  .diff-row { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+  .diff-label { font-size:15px; color:var(--sea-deep); font-weight:700; margin-right:4px; }
   .diff-btn {
     font-family:inherit; cursor:pointer; border:2px solid var(--sea-deep);
     background:transparent; color:var(--sea-deep); font-weight:700;
-    font-size:13px; padding:6px 14px; border-radius:20px; transition:all .15s;
+    font-size:16px; padding:9px 18px; border-radius:22px; transition:all .15s;
   }
   .diff-btn.active { background:var(--sea-deep); color:#fff; }
   .diff-note {
-    font-size:11px; color:var(--ink); opacity:0.8; margin-top:8px; text-align:center;
+    font-size:13px; color:var(--ink); opacity:0.85; margin-top:10px; text-align:center;
   }
   .btn-start {
     background:var(--coral); color:#fff; font-size:19px;
@@ -624,9 +626,9 @@
     <div class="scape" id="scape">
       <svg class="scape-svg" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
         <!-- 富士山＋長い裾野（中央やや左） -->
-        <path d="M0,360 L0,300 Q120,250 250,210 Q360,180 430,120 L470,78 Q500,52 540,78 L590,128 Q660,190 770,215 Q900,245 1010,265 L1200,300 L1200,360 Z" fill="#5f7f99"/>
+        <path d="M0,360 L0,290 Q80,235 170,195 Q240,165 290,110 L330,70 Q360,46 400,70 L450,118 Q540,185 680,212 Q850,242 1010,262 L1200,295 L1200,360 Z" fill="#5f7f99"/>
         <!-- 雪冠 -->
-        <path d="M470,78 Q500,52 540,78 L560,98 Q540,92 525,104 Q512,94 500,106 Q488,96 478,106 Q468,96 458,100 Z" fill="#fbf7ef"/>
+        <path d="M330,70 Q360,46 400,70 L420,90 Q400,84 385,96 Q372,86 360,98 Q348,88 338,98 Q328,88 318,92 Z" fill="#fbf7ef"/>
         <!-- 愛鷹山（富士の右に連なる、なだらかな丸い稜線） -->
         <path d="M640,360 L640,250 Q720,205 800,225 Q860,240 900,210 Q960,225 1010,250 Q1090,235 1160,255 L1200,250 L1200,360 Z" fill="#6f8f86"/>
         <!-- 沼津アルプス（手前・右の低い連なり） -->
@@ -641,8 +643,6 @@
       <div class="deck"></div>
     </div>
     <div class="pinewood" id="pinewood"></div>
-    <div class="pine p1">🌲</div>
-    <div class="pine p2">🌲</div>
     <div class="sea-band"></div>
     <div class="wave w1"></div>
     <div class="wave w2"></div>
@@ -1742,7 +1742,7 @@ function setDifficulty(d){
   document.getElementById("diffTakara").classList.toggle("active", d==="takara");
   let note;
   if(d==="easy") note="中心部や港など、わかりやすい場所から出題します";
-  else if(d==="hard") note="山間部を含めた市内すみずみから出題（上級・制限時間30秒）";
+  else if(d==="hard") note="市内すみずみから出題（上級・制限時間30秒）";
   else note="ぬまづの宝100選だけを巡る、沼津の宝めぐりモード";
   document.getElementById("diffNote").textContent=note;
   // 宝100選モードのときだけ、河内の大スギの写真を背景に
