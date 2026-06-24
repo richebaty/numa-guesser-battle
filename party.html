@@ -406,6 +406,11 @@
   @keyframes sailF1 { 0%{left:108%} 100%{left:-14%} }
   @keyframes sailF2 { 0%{left:-14%} 100%{left:110%} }
   .splash.hard-on .fboat{ opacity:1; transition:opacity .5s; }
+  .splash.hard-on{ background:linear-gradient(170deg, #ffb27a 0%, #f7a896 38%, #c98fb0 70%, #8d7fb3 100%); transition:background .6s; }
+  .splash.hard-on .sun{ background:radial-gradient(circle at 50% 50%, #fff3d6 0%, #ffd27a 45%, #ff9e5e 100%); box-shadow:0 0 60px 24px rgba(255,150,90,0.45); }
+  .splash.hard-on .byuo .tower{ background:#f3c9bd; border-color:#c98f86; }
+  .splash.hard-on .byuo .deck{ background:#f6d4c8; border-color:#c98f86; }
+  .splash.hard-on .byuo .gate{ background:#eec0b4; border-color:#c98f86; }
   /* カモメの群れ（むずかしいモード）：横に流れつつ上下 */
   .gulls{ position:absolute; top:12%; left:0; width:100%; height:42%; z-index:4; opacity:0; pointer-events:none; }
   .splash.hard-on .gulls{ opacity:1; transition:opacity .6s; animation:gullFlock 12s linear infinite, gullBob 2.2s ease-in-out infinite; }
@@ -630,7 +635,7 @@
         <!-- 雪冠 -->
         <path d="M330,70 Q360,46 400,70 L420,90 Q400,84 385,96 Q372,86 360,98 Q348,88 338,98 Q328,88 318,92 Z" fill="#fbf7ef"/>
         <!-- 愛鷹山（富士の右に連なる、なだらかな丸い稜線） -->
-        <path d="M640,360 L640,250 Q720,205 800,225 Q860,240 900,210 Q960,225 1010,250 Q1090,235 1160,255 L1200,250 L1200,360 Z" fill="#6f8f86"/>
+        <path d="M0,360 L0,255 Q90,230 180,248 Q260,262 340,240 Q430,258 520,238 Q610,255 700,232 Q790,250 880,228 Q970,248 1060,234 Q1130,246 1200,238 L1200,360 Z" fill="#6f8f86"/>
         <!-- 沼津アルプス（手前・右の低い連なり） -->
         <path d="M560,360 L560,300 Q620,270 680,295 Q740,272 810,298 Q880,275 950,300 Q1030,278 1100,300 L1200,290 L1200,360 Z" fill="#5e7e6a"/>
       </svg>
