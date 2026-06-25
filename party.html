@@ -1449,6 +1449,7 @@ function showBestScore(){
   const bestRow=document.getElementById("bestRow");
   const bestText=document.getElementById("bestText");
   if(!bestRow||!bestText) return;
+  const modeLabel={"easy":"やさしい","hard":"むずかしい","takara":"ぬまづの宝100選","takara-hard":"宝100選ハード"}[difficulty||"easy"]||"やさしい";
   let prev=0, isNew=false;
   try{
     const bestKey="numaguesser_best_"+(difficulty||"easy");
@@ -1458,10 +1459,10 @@ function showBestScore(){
   const best=Math.max(prev,total);
   if(isNew){
     bestRow.className="best-row newbest";
-    bestText.innerHTML="自己ベスト こうしん！ "+total.toLocaleString()+"点 <span class=\"badge\">NEW</span>";
+    bestText.innerHTML=modeLabel+"モード 自己ベスト更新！ "+total.toLocaleString()+"点 <span class=\"badge\">NEW</span>";
   } else {
     bestRow.className="best-row";
-    bestText.textContent="自己ベスト "+best.toLocaleString()+"点";
+    bestText.textContent=modeLabel+"モード 自己ベスト "+best.toLocaleString()+"点";
   }
   bestRow.style.display="block";
 }
