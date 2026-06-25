@@ -1451,8 +1451,9 @@ function showBestScore(){
   if(!bestRow||!bestText) return;
   let prev=0, isNew=false;
   try{
-    prev=parseInt(localStorage.getItem("numaguesser_best")||"0",10)||0;
-    if(total>prev){ localStorage.setItem("numaguesser_best", String(total)); isNew=true; }
+    const bestKey="numaguesser_best_"+(difficulty||"easy");
+    prev=parseInt(localStorage.getItem(bestKey)||"0",10)||0;
+    if(total>prev){ localStorage.setItem(bestKey, String(total)); isNew=true; }
   }catch(e){ bestRow.style.display="none"; return; }
   const best=Math.max(prev,total);
   if(isNew){
