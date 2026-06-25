@@ -289,6 +289,28 @@
   .splash.takara-on .wave,.splash.takara-on .boat,.splash.takara-on .scape,
   .splash.takara-on .pinewood,.splash.takara-on .fboat,.splash.takara-on .gulls{ opacity:0; transition:opacity .4s; }
 
+  /* 宝100選ハードモード用の写真背景（元旦のびゅうおからの眺め） */
+  .takara-hard-bg{
+    position:absolute; inset:0; z-index:1; opacity:0; transition:opacity .5s;
+    background-image:
+      linear-gradient(180deg, rgba(10,20,40,0.42) 0%, rgba(10,20,40,0.10) 40%, rgba(10,20,40,0.50) 100%),
+      url("元旦びゅうお写真.JPG");
+    background-size:cover; background-position:center 22%; pointer-events:none;
+  }
+  .splash.takara-hard-on .takara-hard-bg{ opacity:1; }
+  .takara-hard-credit{
+    position:absolute; left:0; right:0; z-index:61;
+    bottom:calc(var(--safe-b) + 18px); text-align:center;
+    color:rgba(255,255,255,0.95); font-size:15px; letter-spacing:1px; font-weight:600;
+    text-shadow:0 1px 4px rgba(0,0,0,0.65);
+    opacity:0; transition:opacity .4s; pointer-events:none;
+  }
+  .splash.takara-hard-on .takara-hard-credit{ opacity:1; }
+  .splash.takara-hard-on .sun,.splash.takara-hard-on .fuji,.splash.takara-hard-on .town,
+  .splash.takara-hard-on .byuo,.splash.takara-hard-on .pine,.splash.takara-hard-on .sea-band,
+  .splash.takara-hard-on .wave,.splash.takara-hard-on .boat,.splash.takara-hard-on .scape,
+  .splash.takara-hard-on .pinewood,.splash.takara-hard-on .fboat,.splash.takara-hard-on .gulls{ opacity:0; transition:opacity .4s; }
+
   /* ===== 宝100選 正解写真リビール ===== */
   .photo-reveal {
     position:absolute; inset:0; z-index:55; display:none;
@@ -637,6 +659,8 @@
   <div class="splash" id="splash">
     <div class="takara-bg" id="takaraBg"></div>
     <div class="takara-credit" id="takaraCredit">河内の大スギ（西浦河内）</div>
+    <div class="takara-hard-bg" id="takaraHardBg"></div>
+    <div class="takara-hard-credit" id="takaraHardCredit">元旦のびゅうおからの眺め</div>
     <div class="photo-credit-splash">写真提供：沼津市</div>
     <div class="sun"></div>
     <div class="scape" id="scape">
@@ -689,6 +713,7 @@
           <button class="diff-btn active" id="diffEasy">やさしい</button>
           <button class="diff-btn" id="diffHard">むずかしい</button>
           <button class="diff-btn" id="diffTakara">ぬまづの宝100選</button>
+          <button class="diff-btn" id="diffTakaraHard">宝100選ハード</button>
         </div>
         <div class="diff-note" id="diffNote">中心部や港など、わかりやすい場所から出題します</div>
       </div>
@@ -990,7 +1015,7 @@ function shuffle(arr){
 const TAKARA_PER_GAME = 2;
 function composeRoundAnchors(){
   // 宝100選モード：5問すべて宝から出す
-  if(difficulty==="takara"){
+  if(difficulty==="takara" || difficulty==="takara-hard"){
     let t=shuffle(TAKARA_ANCHORS.slice());
     while(t.length<MAX_ROUNDS){ t=t.concat(shuffle(TAKARA_ANCHORS.slice())); }
     return t.slice(0, MAX_ROUNDS);
@@ -1073,9 +1098,9 @@ function updateTimerUI(){
   document.getElementById("timerNum").textContent=timeLeft;
   document.getElementById("timer").classList.toggle("warn", timeLeft<=10);
 }
-// 難易度ごとの制限時間（むずかしいは短く30秒）
+// 難易度ごとの制限時間（むずかしい・宝100選ハードは30秒）
 function roundSeconds(){
-  return difficulty==="hard" ? 30 : ROUND_SECONDS;
+  return (difficulty==="hard" || difficulty==="takara-hard") ? 30 : ROUND_SECONDS;
 }
 function startTimer(){
   stopTimer();
@@ -1756,19 +1781,23 @@ function setDifficulty(d){
   document.getElementById("diffEasy").classList.toggle("active", d==="easy");
   document.getElementById("diffHard").classList.toggle("active", d==="hard");
   document.getElementById("diffTakara").classList.toggle("active", d==="takara");
+  document.getElementById("diffTakaraHard").classList.toggle("active", d==="takara-hard");
   let note;
   if(d==="easy") note="中心部や港など、わかりやすい場所から出題します";
   else if(d==="hard") note="市内すみずみから出題（上級・制限時間30秒）";
+  else if(d==="takara-hard") note="ぬまづの宝100選のみ・制限時間30秒の超上級モード";
   else note="ぬまづの宝100選だけを巡る、沼津の宝めぐりモード";
   document.getElementById("diffNote").textContent=note;
-  // 宝100選モードのときだけ、河内の大スギの写真を背景に
+  // モードに応じて背景を切り替え
   const sp=document.getElementById("splash");
   if(sp) sp.classList.toggle("takara-on", d==="takara");
+  if(sp) sp.classList.toggle("takara-hard-on", d==="takara-hard");
   if(sp) sp.classList.toggle("hard-on", d==="hard");
 }
 document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
 document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
 document.getElementById("diffTakara").onclick=()=>setDifficulty("takara");
+document.getElementById("diffTakaraHard").onclick=()=>setDifficulty("takara-hard");
 
 // ===== 待合室の沼津ミニ情報スライド =====
 // イラストは写真の転載ではなく、特徴をとらえた手描き風のオリジナル。色はトップ画面と統一。
