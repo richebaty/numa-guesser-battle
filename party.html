@@ -1251,14 +1251,6 @@ function makeSeedIndices(){
 function findPanoAt(sv, anchor){
   // 宝100選は「すぐそば」を出したいので、専用のていねいな探索（50mから少しずつ拡大）
   if(anchor.takara){
-    if(anchor.panoId){
-      return Promise.resolve({
-        panoId: anchor.panoId,
-        pos: new google.maps.LatLng(anchor.lat, anchor.lng),
-        hint: anchor.name, yomi: anchor.yomi, note: anchor.note||null,
-        heading: anchor.heading||0, pitch: anchor.pitch||0
-      });
-    }
     return new Promise((resolve)=>{
       const radii=[50,80,120,180,260,360]; // m。近いところから順に試す
       let i=0;
@@ -1266,7 +1258,7 @@ function findPanoAt(sv, anchor){
         if(i>=radii.length){
           // どうしても近くに無ければ、宝の座標そのものを中心に最後の探索
           sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:500},(d,s)=>{
-            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
+            if(s==="OK") resolve({panoId:d.location.pano,pos:new google.maps.LatLng(anchor.lat,anchor.lng),hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
             else resolve({panoId:null,pos:new google.maps.LatLng(anchor.lat,anchor.lng),hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
           });
           return;
@@ -1295,7 +1287,7 @@ function findPanoAt(sv, anchor){
         else {
           // それでも無ければ屋内含めて最後の探索、なお駄目なら沼津駅へ
           sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:3000},(d,s)=>{
-            if(s==="OK") resolve({panoId:d.location.pano,pos:d.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
+            if(s==="OK") resolve({panoId:d.location.pano,pos:new google.maps.LatLng(anchor.lat,anchor.lng),hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null});
             else sv.getPanorama({location:NUMAZU_ANCHORS[0],radius:1000},(d2)=>resolve({panoId:d2.location.pano,pos:d2.location.latLng,hint:"沼津駅周辺",yomi:"ぬまづえき しゅうへん",note:null}));
           });
         }
