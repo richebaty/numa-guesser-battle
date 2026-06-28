@@ -545,6 +545,36 @@
     color:rgba(255,255,255,0.7); font-size:10px; letter-spacing:0.5px;
     text-shadow:0 1px 3px rgba(0,0,0,0.5); pointer-events:none;
   }
+
+/* ===== 宝100選コレクション ===== */
+.takara-col-btn{ display:none; margin-top:8px; margin-left:auto; margin-right:auto; background:rgba(255,255,255,0.82); border:2px solid var(--coral); color:var(--sea-deep); font-size:14px; padding:9px 20px; border-radius:22px; font-weight:700; cursor:pointer; }
+.takara-col-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:5000; flex-direction:column; }
+.takara-col-overlay.show{ display:flex; }
+.takara-col-body{ flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; align-items:center; }
+.takara-col-header{ flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--sea-deep); color:#fff; }
+.takara-col-title{ font-size:18px; font-weight:700; letter-spacing:2px; }
+.takara-col-count{ font-size:14px; margin-left:12px; opacity:.8; }
+.takara-col-close{ background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0 4px; }
+.takara-col-rank-row{ padding:8px 0; width:100%; max-width:500px; background:rgba(255,255,255,0.06); }
+.takara-rank-badge{ display:inline-block; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:700; }
+.takara-rank-master{ background:var(--gold); color:#5a3a00; }
+.takara-rank-meijin{ background:#b0b0c8; color:#222; }
+.takara-rank-sensei{ background:#c97a3a; color:#fff; }
+.takara-col-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; width:100%; max-width:500px; }
+.takara-col-cell{ border-radius:10px; aspect-ratio:240/336; position:relative; background:#1e2c3c; border:2px solid rgba(255,255,255,0.08); overflow:hidden; cursor:pointer; }
+.takara-col-cell.got{ border-color:var(--coral); }
+.takara-col-cell img{ width:100%; height:100%; object-fit:cover; display:block; }
+.takara-col-cell .tcell-num{ position:absolute; top:4px; left:5px; font-size:9px; color:rgba(255,255,255,0.65); font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,0.6); }
+.takara-col-cell .tcell-name{ position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.62); color:#fff; font-size:8px; padding:3px 4px; text-align:center; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.takara-col-cell .tcell-lock{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; color:rgba(255,255,255,0.1); }
+.takara-lightbox{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:6000; flex-direction:column; align-items:center; justify-content:center; }
+.takara-lightbox.show{ display:flex; }
+.takara-lightbox img{ max-width:90vw; max-height:55vh; object-fit:contain; border-radius:10px; }
+.takara-lightbox .tlb-name{ color:#fff; font-size:18px; font-weight:700; margin-top:12px; text-align:center; }
+.takara-lightbox .tlb-no{ color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:6px; }
+.takara-lightbox .tlb-url{ color:var(--coral); font-size:12px; margin-top:6px; text-decoration:underline; }
+.takara-lightbox .tlb-close{ margin-top:16px; background:transparent; border:2px solid rgba(255,255,255,0.4); color:#fff; padding:8px 24px; border-radius:22px; font-size:14px; cursor:pointer; }
+.takara-new-banner{ background:var(--sea-deep); color:#fff; border-radius:12px; padding:12px 16px; margin-top:10px; margin-bottom:14px; font-size:14px; font-weight:700; text-align:center; }
 </style>
 <!-- Firebase (対戦機能用) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -639,6 +669,7 @@
         <span id="bestText"></span>
       </div>
       <div class="tanka" id="finalTanka"></div>
+      <button class="btn btn-ghost" id="takaraFinalColBtn" style="display:none; margin-top:10px; margin-bottom:6px; width:100%;">ぬまづの宝100選図鑑を見る</button>
       <button class="btn btn-guess" id="reviewBtn" style="display:none; margin-bottom:10px;">ふりかえりを見る 🗺️</button>
       <button class="btn btn-guess" id="restartBtn">もう一回 ↺</button>
       <button class="btn btn-ghost" id="homeBtn" style="margin-top:10px;">ホームへ ⌂</button>
@@ -716,6 +747,7 @@
           <button class="diff-btn" id="diffTakaraHard">宝100選ハード</button>
         </div>
         <div class="diff-note" id="diffNote">中心部や港など、わかりやすい場所から出題します</div>
+      <button class="takara-col-btn" id="takaraColSplashBtn">ぬまづの宝100選図鑑を見る</button>
       </div>
 
       <!-- 主催者：待合室を作る -->
@@ -791,6 +823,27 @@
   </div>
 </div>
 
+<div id="takaraColOverlay" class="takara-col-overlay">
+  <div class="takara-col-header">
+    <div>
+      <span class="takara-col-title">ぬまづの宝100選図鑑</span>
+      <span class="takara-col-count" id="takaraColCount">0 / 100</span>
+    </div>
+    <button class="takara-col-close" id="takaraColCloseBtn">✕</button>
+  </div>
+  <div class="takara-col-body">
+    <div class="takara-col-rank-row" id="takaraColRankRow"></div>
+    <div class="takara-col-grid" id="takaraColGrid"></div>
+  </div>
+</div>
+<div id="takaraLightbox" class="takara-lightbox">
+  <div class="tlb-no" id="tlbNo"></div>
+  <img id="tlbImg" src="" alt="">
+  <div class="tlb-name" id="tlbName"></div>
+  <a class="tlb-url" id="tlbUrl" href="#" target="_blank" rel="noopener"></a>
+  <button class="tlb-close" id="tlbClose">閉じる</button>
+</div>
+
 <script>
 // ============================================================
 //  ▼▼▼ 運用設定（書き換えるのはこの2つだけ） ▼▼▼
@@ -803,6 +856,156 @@ const EMBEDDED_API_KEY = "AIzaSyCL4nlsFMiGZzDOgcJd-_Ioj-rFu_Uz4KQ";
 //    （写真が無い地点は自動でスキップします）
 const TAKARA_PHOTO_DIR  = "images/";   // 画像フォルダ名
 const TAKARA_PHOTO_SECS = 3;           // 写真を映す秒数（タップでスキップ可）
+const TAKARA_PHOTO_MAP = {
+  1:"images/001.jpg",2:"images/002.jpg",3:"images/003.jpg",4:"images/004.jpg",5:"images/005.jpg",
+  6:"images/006.jpg",7:"images/007.jpg",8:"images/008.jpg",9:"images/009.jpg",10:"images/010.jpg",
+  11:"images/011.jpg",12:"images/012.jpg",13:"images/013.jpg",14:"images/014.jpg",15:"images/015.jpg",
+  16:"images/016.jpg",17:"images/017.jpg",18:"images/018.jpg",19:"images/019.jpg",20:"images/020.jpg",
+  21:"images/021.jpg",22:"images/022.jpg",23:"images/023.jpg",24:"images/024.jpg",25:"images/025.jpg",
+  26:"images/026.jpg",27:"images/027.jpg",28:"images/028.jpg",29:"images/029.jpg",30:"images/030.jpg",
+  31:"images/031.jpg",32:"images/032.jpg",33:"images/033.jpg",34:"images/034.jpg",35:"images/035.jpg",
+  36:"images/036.jpg",37:"images/037.jpg",38:"images/038.jpg",39:"images/039.jpg",40:"images/040.jpg",
+  41:"images/041.jpg",42:"images/042.jpg",43:"images/043.jpg",44:"images/044.jpg",45:"images/045.jpg",
+  46:"images/046.jpg",47:"images/047.jpg",48:"images/048.jpg",49:"images/049.jpg",50:"images/050.jpg",
+  51:"images/051.jpg",52:"images/052.jpg",53:"images/053.jpg",54:"images/054.jpg",55:"images/055.jpg",
+  56:"images/056.jpg",57:"images/057.jpg",58:"images/058.jpg",59:"images/059.jpg",60:"images/060.jpg",
+  61:"images/061.jpg",62:"images/062.jpg",63:"images/063.jpg",64:"images/064.jpg",65:"images/065.jpg",
+  66:"images/066.jpg",67:"images/067.jpg",68:"images/068.jpg",69:"images/069.jpg",70:"images/070.jpg",
+  71:"images/071.jpg",72:"images/072.jpg",73:"images/073.jpg",74:"images/074.jpg",75:"images/075.jpg",
+  76:"images/076.jpg",77:"images/077.jpg",78:"images/078.jpg",79:"images/079.jpg",80:"images/080.jpg",
+  81:"images/081.jpg",82:"images/082.jpg",83:"images/083.jpg",84:"images/084.jpg",85:"images/085.jpg",
+  86:"images/086.jpg",87:"images/087.jpg",88:"images/088.jpg",89:"images/089.jpg",90:"images/090.jpg",
+  91:"images/091.jpg",92:"images/092.jpg",93:"images/093.jpg",94:"images/094.jpg",95:"images/095.jpg",
+  96:"images/096.jpg",97:"images/097.jpg",98:"images/098.jpg",99:"images/099.jpg",100:"images/100.jpg"
+};
+const TAKARA_NAMES = {
+  1:"愛鷹広域公園",2:"愛鷹山",3:"鮎壺の滝",4:"淡島",5:"伊豆半島ジオパーク",
+  6:"井田の菜の花畑",7:"浮島ひまわりらんど・なのはならんど",8:"牛臥山公園",9:"大平の石神・石仏群",10:"岡宮浅間神社のクス",
+  11:"大瀬崎",12:"門池",13:"狩野川",14:"北山の棚田",15:"金冠山",
+  16:"河内の大スギ",17:"三浦地区のリアス海岸",18:"千本松原",19:"達磨山",20:"ダルマ夕日",
+  21:"沼津アルプス",22:"沼津から見る富士山",23:"沼津の海",24:"沼津の桜の名所",25:"沼津の湧水群",
+  26:"はかま滝",27:"戸田の富士山展望スポット",28:"発端丈山",29:"御浜岬",30:"赤野観音堂",
+  31:"阿野全成と大泉寺",32:"伊豆石産業遺産群",33:"江原素六",34:"御成橋",35:"海軍技研址の碑",
+  36:"狩野川放水路",37:"旧三津坂隧道",38:"興国寺城跡",39:"光長寺",40:"興農学園農場",
+  41:"金剛寺（文覚上人と金女郎狐）",42:"三枚橋城・沼津城と沼津兵学校",43:"蛇松緑道",44:"松蔭寺と白隠禅師",45:"禅長寺",
+  46:"大中寺恩香殿と鐘楼門",47:"帯笑園",48:"高尾山古墳と祭典",49:"高沢公園のSL",50:"長浜城跡",
+  51:"沼津御用邸記念公園",52:"浜の観音さん（長谷寺）",53:"日枝神社",54:"松城家住宅",55:"安田屋旅館 松棟・月棟",
+  56:"洋式帆船建造地跡（ディアナ号/ヘダ号）",57:"明石海人（歌碑）",58:"井上靖（文学碑）",59:"内浦・静浦及び周辺地域の漁撈用具",60:"江浦水祝儀と裸参り",
+  61:"大瀬まつり・内浦漁港祭",62:"おんべこんべ",63:"海中みそぎ",64:"我入道の渡し船",65:"吟道の碑",
+  66:"ごぜ芸能まつり",67:"潮の音プロムナードと文学碑",68:"芹沢光治良記念館",69:"天王祭",70:"沼津垣",
+  71:"沼津の歌（歌碑）",72:"BARのまち・沼津のBAR文化",73:"原海岸と地引網",74:"戸田の漁師踊り",75:"モン・ミュゼ沼津（庄司美術館）",
+  76:"若山牧水（記念館）",77:"あしたか牛",78:"西浦みかん",79:"西浦レモネード",80:"沼津の寿司",
+  81:"ひもの（あじの干物）",82:"戸田たちばな",83:"戸田の塩（戸田塩）",84:"アスルクラロ沼津",85:"こいのぼりフェスティバル",
+  86:"スカンジナビア号（ステラポラリス）",87:"仲見世通り（七夕まつり）",88:"沼津夏まつり・狩野川花火大会",89:"フェンシングのまち",90:"戸田港まつり",
+  91:"よさこい東海道",92:"ラブライブ！サンシャイン!!の聖地",93:"らららサンビーチ",94:"泉水源地",95:"深海魚",
+  96:"せせらぎの径と沼津ホタルまつり",97:"タカアシガニと甲羅のお面",98:"沼津港と大型展望水門びゅうお",99:"沼津茶と茶の湯・茶会文化",100:"沼津方式（ごみの分別収集）"
+};
+const TAKARA_URLS = {
+  1:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/001.htm",
+  2:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/002.htm",
+  3:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/003.htm",
+  4:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/004.htm",
+  5:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/005.htm",
+  6:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/006.htm",
+  7:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/007.htm",
+  8:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/008.htm",
+  9:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/009.htm",
+  10:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/010.htm",
+  11:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/011.htm",
+  12:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/012.htm",
+  13:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/013.htm",
+  14:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/014.htm",
+  15:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/015.htm",
+  16:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/016.htm",
+  17:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/017.htm",
+  18:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/018.htm",
+  19:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/019.htm",
+  20:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/020.htm",
+  21:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/021.htm",
+  22:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/022.htm",
+  23:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/023.htm",
+  24:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/024.htm",
+  25:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/025.htm",
+  26:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/026.htm",
+  27:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/027.htm",
+  28:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/028.htm",
+  29:"https://www.city.numazu.shizuoka.jp/takara100/category/shizen/029.htm",
+  30:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/030.htm",
+  31:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/031.htm",
+  32:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/032.htm",
+  33:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/033.htm",
+  34:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/034.htm",
+  35:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/035.htm",
+  36:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/036.htm",
+  37:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/037.htm",
+  38:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/038.htm",
+  39:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/039.htm",
+  40:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/040.htm",
+  41:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/041.htm",
+  42:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/042.htm",
+  43:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/043.htm",
+  44:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/044.htm",
+  45:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/045.htm",
+  46:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/046.htm",
+  47:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/047.htm",
+  48:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/048.htm",
+  49:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/049.htm",
+  50:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/050.htm",
+  51:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/051.htm",
+  52:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/052.htm",
+  53:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/053.htm",
+  54:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/054.htm",
+  55:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/055.htm",
+  56:"https://www.city.numazu.shizuoka.jp/takara100/category/rekishi/056.htm",
+  57:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/057.htm",
+  58:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/058.htm",
+  59:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/059.htm",
+  60:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/060.htm",
+  61:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/061.htm",
+  62:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/062.htm",
+  63:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/063.htm",
+  64:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/064.htm",
+  65:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/065.htm",
+  66:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/066.htm",
+  67:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/067.htm",
+  68:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/068.htm",
+  69:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/069.htm",
+  70:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/070.htm",
+  71:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/071.htm",
+  72:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/072.htm",
+  73:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/073.htm",
+  74:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/074.htm",
+  75:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/075.htm",
+  76:"https://www.city.numazu.shizuoka.jp/takara100/category/bunka/076.htm",
+  77:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/077.htm",
+  78:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/078.htm",
+  79:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/079.htm",
+  80:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/080.htm",
+  81:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/081.htm",
+  82:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/082.htm",
+  83:"https://www.city.numazu.shizuoka.jp/takara100/category/mikaku/083.htm",
+  84:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/084.htm",
+  85:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/085.htm",
+  86:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/086.htm",
+  87:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/087.htm",
+  88:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/088.htm",
+  89:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/089.htm",
+  90:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/090.htm",
+  91:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/091.htm",
+  92:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/092.htm",
+  93:"https://www.city.numazu.shizuoka.jp/takara100/category/nigiwai/093.htm",
+  94:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/094.htm",
+  95:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/095.htm",
+  96:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/096.htm",
+  97:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/097.htm",
+  98:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/098.htm",
+  99:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/099.htm",
+  100:"https://www.city.numazu.shizuoka.jp/takara100/category/mugen/100.htm"
+};
+const _TAKARA_COL_KEY = "numaGuesserTakaraCollection";
+const TAKARA_COLLECT_M = 20;
+let takaraNewThisGame = [];
+
 // ============================================================
 //  ▲▲▲ 設定はここまで ▲▲▲
 // ============================================================
@@ -864,43 +1067,43 @@ const NUMAZU_ANCHORS = [
 ];
 // ぬまづの宝100選（ストリートビューで見えやすい場所を厳選）。位置は沼津市HPの地図より。
 const TAKARA_ANCHORS = [
-  {lat:35.156618, lng:138.852323, name:"愛鷹広域公園", yomi:"あしたかこういき こうえん", r:80, jit:0, takara:true, note:"沼津市北部の森に囲まれた自然豊かな公園。桜とホタルの名所。ぬまづの宝100選No.001。"},
-  {lat:35.19831, lng:138.807932, name:"愛鷹山", yomi:"あしたかやま", r:150, jit:0, takara:true, note:"沼津で一番高い山（標高1,188m）。ブナ林や愛鷹ツツジが見られる。ぬまづの宝100選No.002。"},
-  {lat:35.131027, lng:138.892517, name:"鮎壺の滝", yomi:"あゆつぼのたき", r:80, jit:0, takara:true, note:"富士山の溶岩流でできた高さ10m・幅90mの滝。県指定天然記念物。ぬまづの宝100選No.003。"},
-  {lat:35.033109, lng:138.887647, name:"淡島", yomi:"あわしま", r:80, jit:0, takara:true, note:"内浦の海に浮かぶ小島。水族館やホテルのあるリゾート地。ぬまづの宝100選No.004。"},
-  {lat:34.996752, lng:138.775692, name:"伊豆半島ジオパーク", yomi:"いずはんとう じおぱーく", r:150, jit:0, takara:true, note:"井田の明神池など、火山がつくった地形を間近で見られるジオサイト。ぬまづの宝100選No.005。"},
-  {lat:34.9991, lng:138.779571, name:"井田の菜の花畑", yomi:"いたの なのはなばたけ", r:80, jit:0, takara:true, note:"沼津を代表する早春の名物。1〜2月が見頃。ぬまづの宝100選No.006。"},
-  {lat:35.141201, lng:138.78569, name:"浮島ひまわりらんど・なのはならんど", yomi:"うきしま ひまわりらんど", r:80, jit:0, takara:true, note:"元耕作放棄地に2万5千本のひまわり。初春は菜の花。平沼にある。ぬまづの宝100選No.007。"},
+  {lat:35.156618, lng:138.852323, name:"愛鷹広域公園", yomi:"あしたかこういき こうえん", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDtq4LfzwE", heading:59.6, pitch:6.9, note:"沼津市北部の森に囲まれた自然豊かな公園。桜とホタルの名所。ぬまづの宝100選No.001。"},
+  {lat:35.19831, lng:138.807932, name:"愛鷹山", yomi:"あしたかやま", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgICE2dHEdw", heading:295.8, pitch:13.0, note:"沼津で一番高い山（標高1,188m）。ブナ林や愛鷹ツツジが見られる。ぬまづの宝100選No.002。"},
+  {lat:35.131027, lng:138.892517, name:"鮎壺の滝", yomi:"あゆつぼのたき", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDp-4Xn_gE", heading:345.0, pitch:11.1, note:"富士山の溶岩流でできた高さ10m・幅90mの滝。県指定天然記念物。ぬまづの宝100選No.003。"},
+  {lat:35.033109, lng:138.887647, name:"淡島", yomi:"あわしま", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIChi_WOOg", heading:148.7, pitch:9.2, note:"内浦の海に浮かぶ小島。水族館やホテルのあるリゾート地。ぬまづの宝100選No.004。"},
+  {lat:34.996752, lng:138.775692, name:"伊豆半島ジオパーク", yomi:"いずはんとう じおぱーく", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDy45n_oQE", heading:14.0, pitch:44.4, note:"井田の明神池など、火山がつくった地形を間近で見られるジオサイト。ぬまづの宝100選No.005。"},
+  {lat:34.9991, lng:138.779571, name:"井田の菜の花畑", yomi:"いたの なのはなばたけ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDcg4zFcg", heading:334.1, pitch:15.2, note:"沼津を代表する早春の名物。1〜2月が見頃。ぬまづの宝100選No.006。"},
+  {lat:35.141201, lng:138.78569, name:"浮島ひまわりらんど・なのはならんど", yomi:"うきしま ひまわりらんど", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICbkJnDqAE", heading:71.9, pitch:-7.9, note:"元耕作放棄地に2万5千本のひまわり。初春は菜の花。平沼にある。ぬまづの宝100選No.007。"},
   {lat:35.073537, lng:138.865675, name:"牛臥山公園", yomi:"うしぶせやま こうえん", r:80, jit:0, takara:true, note:"千本浜から御用邸へ続く海岸線を楽しめる海の公園。ぬまづの宝100選No.008。"},
   {lat:35.07229, lng:138.893923, name:"大平の石神・石仏群", yomi:"おおひらの せきじん・せきぶつぐん", r:80, jit:0, takara:true, note:"大平地区一帯に約220体祀られた道祖神の石神・石仏。ぬまづの宝100選No.009。"},
-  {lat:35.123958, lng:138.873134, name:"岡宮浅間神社のクス", yomi:"おかのみやせんげんじんじゃの くす", r:80, jit:0, takara:true, note:"樹齢千数百年、高さ約21mの巨大なクス。県指定天然記念物。ぬまづの宝100選No.010。"},
-  {lat:35.02961, lng:138.788147, name:"大瀬崎", yomi:"おせざき", r:80, jit:0, takara:true, note:"駿河湾に突き出た岬。海越しの富士山と、淡水の神池で知られる。ぬまづの宝100選No.011。"},
-  {lat:35.128496, lng:138.880561, name:"門池", yomi:"かどいけ", r:80, jit:0, takara:true, note:"約1.3kmの遊歩道で四季を感じられる憩いの池。ぬまづの宝100選No.012。"},
+  {lat:35.123958, lng:138.873134, name:"岡宮浅間神社のクス", yomi:"おかのみやせんげんじんじゃの くす", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICk3PHCMA", heading:78.4, pitch:0.0, note:"樹齢千数百年、高さ約21mの巨大なクス。県指定天然記念物。ぬまづの宝100選No.010。"},
+  {lat:35.02961, lng:138.788147, name:"大瀬崎", yomi:"おせざき", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDyobLfGw", heading:232.3, pitch:48.3, note:"駿河湾に突き出た岬。海越しの富士山と、淡水の神池で知られる。ぬまづの宝100選No.011。"},
+  {lat:35.128496, lng:138.880561, name:"門池", yomi:"かどいけ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDi0rLQcQ", heading:302.2, pitch:-0.3, note:"約1.3kmの遊歩道で四季を感じられる憩いの池。ぬまづの宝100選No.012。"},
   {lat:35.097879, lng:138.860132, name:"狩野川", yomi:"かのがわ", r:80, jit:0, takara:true, note:"市街中心部から駿河湾へ注ぐ、県内で唯一北へ流れる一級河川。ぬまづの宝100選No.013。"},
   {lat:34.967878, lng:138.81474, name:"北山の棚田", yomi:"きたやまの たなだ", r:80, jit:0, takara:true, note:"戸田の新田地区にある石積みの棚田。「日本の棚田百選」認定。ぬまづの宝100選No.014。"},
-  {lat:34.974848, lng:138.834056, name:"金冠山", yomi:"きんかんざん", r:150, jit:0, takara:true, note:"西浦と戸田の境にある山。山頂から富士山と駿河湾を一望できる。ぬまづの宝100選No.015。"},
+  {lat:34.974848, lng:138.834056, name:"金冠山", yomi:"きんかんざん", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIC-88H6mQE", heading:296.5, pitch:-8.1, note:"西浦と戸田の境にある山。山頂から富士山と駿河湾を一望できる。ぬまづの宝100選No.015。"},
   {lat:34.989897, lng:138.855109, name:"河内の大スギ", yomi:"こうちの おおすぎ", r:80, jit:0, takara:true, note:"森の中で一本だけ存在感を放つ杉の巨木。県指定天然記念物。西浦河内。ぬまづの宝100選No.016。"},
-  {lat:35.025272, lng:138.876557, name:"三浦地区のリアス海岸", yomi:"みうらちくの りあすかいがん", r:150, jit:0, takara:true, note:"西浦の入り組んだ海岸線。小さな漁港と段々畑が連なる。ぬまづの宝100選No.017。"},
-  {lat:35.092889, lng:138.847278, name:"千本松原", yomi:"せんぼんまつばら", r:80, jit:0, takara:true, note:"狩野川河口から続く松林。富士山と夕陽が美しい白砂青松100選。ぬまづの宝100選No.018。"},
-  {lat:34.926641, lng:138.875663, name:"達磨山", yomi:"だるまやま", r:150, jit:0, takara:true, note:"伊豆市との境にある標高982mの山。山頂に戸田村民建立の石碑。ぬまづの宝100選No.019。"},
-  {lat:35.072456, lng:138.869594, name:"ダルマ夕日", yomi:"だるまゆうひ", r:80, jit:0, takara:true, note:"戸田の海に、だるまのような形で沈む冬の夕日。ぬまづの宝100選No.020。"},
-  {lat:35.06263, lng:138.89176, name:"沼津アルプス", yomi:"ぬまづあるぷす", r:150, jit:0, takara:true, note:"香貫山から鷲頭山へと続く、市民に愛される縦走の山並み。ぬまづの宝100選No.021。"},
-  {lat:35.091893, lng:138.875694, name:"沼津から見る富士山", yomi:"ぬまづから みる ふじさん", r:150, jit:0, takara:true, note:"香貫山の展望台などから望む、駿河湾ごしの富士山。ぬまづの宝100選No.022。"},
-  {lat:35.000716, lng:138.778584, name:"沼津の海", yomi:"ぬまづの うみ", r:150, jit:0, takara:true, note:"駿河湾に面した、沼津の海辺の風景。ぬまづの宝100選No.023。"},
+  {lat:35.025272, lng:138.876557, name:"三浦地区のリアス海岸", yomi:"みうらちくの りあすかいがん", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDq68KSRg", heading:342.3, pitch:-1.0, note:"西浦の入り組んだ海岸線。小さな漁港と段々畑が連なる。ぬまづの宝100選No.017。"},
+  {lat:35.092889, lng:138.847278, name:"千本松原", yomi:"せんぼんまつばら", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgID-2srvqwE", heading:226.5, pitch:-6.4, note:"狩野川河口から続く松林。富士山と夕陽が美しい白砂青松100選。ぬまづの宝100選No.018。"},
+  {lat:34.926641, lng:138.875663, name:"達磨山", yomi:"だるまやま", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgICk4KLPmAE", heading:0.4, pitch:12.8, note:"伊豆市との境にある標高982mの山。山頂に戸田村民建立の石碑。ぬまづの宝100選No.019。"},
+  {lat:35.072456, lng:138.869594, name:"ダルマ夕日", yomi:"だるまゆうひ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgID4woHu9wE", heading:356.5, pitch:-7.9, note:"戸田の海に、だるまのような形で沈む冬の夕日。ぬまづの宝100選No.020。"},
+  {lat:35.06263, lng:138.89176, name:"沼津アルプス", yomi:"ぬまづあるぷす", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgICk3Mnuag", heading:20.9, pitch:9.1, note:"香貫山から鷲頭山へと続く、市民に愛される縦走の山並み。ぬまづの宝100選No.021。"},
+  {lat:35.091893, lng:138.875694, name:"沼津から見る富士山", yomi:"ぬまづから みる ふじさん", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDq7c2yPQ", heading:334.1, pitch:0.7, note:"香貫山の展望台などから望む、駿河湾ごしの富士山。ぬまづの宝100選No.022。"},
+  {lat:35.000716, lng:138.778584, name:"沼津の海", yomi:"ぬまづの うみ", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDq68LOQw", heading:344.5, pitch:3.3, note:"駿河湾に面した、沼津の海辺の風景。ぬまづの宝100選No.023。"},
   {lat:35.127895, lng:138.799788, name:"沼津の桜の名所", yomi:"ぬまづの さくらの めいしょ", r:150, jit:0, takara:true, note:"沼川沿いなどに続く、春の桜並木。ぬまづの宝100選No.024。"},
-  {lat:35.134389, lng:138.785942, name:"沼津の湧水群", yomi:"あくあぷらざ ゆうすいち", r:80, jit:0, takara:true, note:"浮島沼の植生や野鳥が観察できる遊水地。原・雌鹿塚にある。ぬまづの宝100選No.025（沼津の湧水群）。"},
-  {lat:34.966482, lng:138.819967, name:"はかま滝", yomi:"はかまだき", r:150, jit:0, takara:true, note:"戸田の山あいにある滝。沢沿いの自然が楽しめる。ぬまづの宝100選No.026。"},
-  {lat:34.983113, lng:138.770338, name:"戸田の富士山展望スポット", yomi:"へだの ふじさん てんぼうすぽっと", r:80, jit:0, takara:true, note:"煌めきの丘・出逢い岬など、富士山と駿河湾を望む戸田の展望地。ぬまづの宝100選No.027。"},
-  {lat:35.012935, lng:138.90321, name:"発端丈山", yomi:"ほったんじょうやま", r:150, jit:0, takara:true, note:"内浦にある標高410mの山。山頂から富士山と駿河湾を一望できる。ぬまづの宝100選No.028。"},
-  {lat:34.97729, lng:138.764115, name:"御浜岬", yomi:"みはまみさき", r:80, jit:0, takara:true, note:"砂れきが堆積してできた、戸田港を抱く岬。ジオサイト。ぬまづの宝100選No.029。"},
+  {lat:35.134389, lng:138.785942, name:"沼津の湧水群", yomi:"あくあぷらざ ゆうすいち", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICE_KrfWA", heading:252.3, pitch:1.2, note:"浮島沼の植生や野鳥が観察できる遊水地。原・雌鹿塚にある。ぬまづの宝100選No.025（沼津の湧水群）。"},
+  {lat:34.966482, lng:138.819967, name:"はかま滝", yomi:"はかまだき", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIC0pOjoUw", heading:9.5, pitch:-1.4, note:"戸田の山あいにある滝。沢沿いの自然が楽しめる。ぬまづの宝100選No.026。"},
+  {lat:34.983113, lng:138.770338, name:"戸田の富士山展望スポット", yomi:"へだの ふじさん てんぼうすぽっと", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDW9vmS7AE", heading:125.0, pitch:3.9, note:"煌めきの丘・出逢い岬など、富士山と駿河湾を望む戸田の展望地。ぬまづの宝100選No.027。"},
+  {lat:35.012935, lng:138.90321, name:"発端丈山", yomi:"ほったんじょうやま", r:150, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDh_bSHWg", heading:121.5, pitch:18.7, note:"内浦にある標高410mの山。山頂から富士山と駿河湾を一望できる。ぬまづの宝100選No.028。"},
+  {lat:34.97729, lng:138.764115, name:"御浜岬", yomi:"みはまみさき", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICCsNrBfg", heading:30.5, pitch:36.0, note:"砂れきが堆積してできた、戸田港を抱く岬。ジオサイト。ぬまづの宝100選No.029。"},
   {lat:35.153473, lng:138.822227, name:"赤野観音堂", yomi:"あけの かんのんどう", r:80, jit:0, takara:true, note:"江戸前期の建築様式を残すお堂。沼津新八景のひとつ。柳沢にある。ぬまづの宝100選No.030。"},
-  {lat:35.142539, lng:138.795553, name:"阿野全成と大泉寺", yomi:"だいせんじ（あのぜんじょうの はか）", r:80, jit:0, takara:true, note:"源頼朝の弟・阿野全成の館跡といわれる寺。墓は市の史跡。東井出。ぬまづの宝100選No.031。"},
+  {lat:35.142539, lng:138.795553, name:"阿野全成と大泉寺", yomi:"だいせんじ（あのぜんじょうの はか）", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDKvO7_1gE", heading:216.0, pitch:9.4, note:"源頼朝の弟・阿野全成の館跡といわれる寺。墓は市の史跡。東井出。ぬまづの宝100選No.031。"},
   {lat:35.020357, lng:138.869147, name:"伊豆石産業遺産群", yomi:"いずいし さんぎょういさんぐん", r:80, jit:0, takara:true, note:"沼津産の伊豆石を使った石蔵などが残る。西浦久連の石蔵通りなど。ぬまづの宝100選No.032。"},
   {lat:35.13474, lng:138.85822, name:"江原素六", yomi:"めいじしりょうかん（えばらそろく）", r:80, jit:0, takara:true, note:"沼津兵学校などを設立した江原素六の功績を伝える史料館。西熊堂。ぬまづの宝100選No.033。"},
   {lat:35.096123, lng:138.8591, name:"御成橋", yomi:"おなりばし", r:80, jit:0, takara:true, note:"狩野川にかかる、県東部初の鉄橋。御用邸へ向かう皇族にちなむ名。ぬまづの宝100選No.034。"},
   {lat:35.083327, lng:138.879677, name:"海軍技研址の碑", yomi:"かいぐんぎけんし のひ", r:80, jit:0, takara:true, note:"昭和16年、海軍技術研究所の音響研究部が置かれた地。下香貫にある。ぬまづの宝100選No.035。"},
   {lat:35.048364, lng:138.906636, name:"狩野川放水路", yomi:"かのがわ ほうすいろ", r:80, jit:0, takara:true, note:"昭和40年完成、3つのトンネルが特徴の大規模水路。口野にある。ぬまづの宝100選No.036。"},
-  {lat:35.025254, lng:138.909981, name:"旧三津坂隧道", yomi:"きゅうみとざか ずいどう", r:80, jit:0, takara:true, note:"明治29年完成、現存する伊豆最古のトンネル。井上靖「しろばんば」にも登場。ぬまづの宝100選No.037。"},
+  {lat:35.025254, lng:138.909981, name:"旧三津坂隧道", yomi:"きゅうみとざか ずいどう", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDcuNbWhQE", heading:276.4, pitch:1.7, note:"明治29年完成、現存する伊豆最古のトンネル。井上靖「しろばんば」にも登場。ぬまづの宝100選No.037。"},
   {lat:35.141536, lng:138.807095, name:"興国寺城跡", yomi:"こうこくじじょうあと", r:80, jit:0, takara:true, note:"北条早雲が旗揚げした城の跡。国指定史跡。ぬまづの宝100選No.038。"},
   {lat:35.126089, lng:138.874403, name:"光長寺", yomi:"こうちょうじ", r:80, jit:0, takara:true, note:"700年以上の歴史をもつ法華宗の大本山。岡宮にある。ぬまづの宝100選No.039。"},
   {lat:35.021127, lng:138.869483, name:"興農学園農場", yomi:"こうのうがくえん のうじょう", r:80, jit:0, takara:true, note:"昭和4年開校のデンマーク式農場教育の場。西浦久連にある。ぬまづの宝100選No.040。"},
@@ -912,27 +1115,27 @@ const TAKARA_ANCHORS = [
   {lat:35.122072, lng:138.854368, name:"大中寺恩香殿と鐘楼門", yomi:"だいちゅうじ", r:80, jit:0, takara:true, note:"市内唯一の鐘楼門を持つ寺。梅園が有名で、恩香殿は国登録有形文化財。ぬまづの宝100選No.046。"},
   {lat:35.124757, lng:138.798785, name:"帯笑園", yomi:"たいしょうえん", r:80, jit:0, takara:true, note:"原の植松家が江戸時代から伝える庭園。原駅から徒歩約10分。ぬまづの宝100選No.047。"},
   {lat:35.122305, lng:138.86095, name:"高尾山古墳と祭典", yomi:"たかおさん こふん", r:80, jit:0, takara:true, note:"3世紀中頃の東日本最古級の前方後方墳。東熊堂にある。ぬまづの宝100選No.048。"},
-  {lat:35.105145, lng:138.85552, name:"高沢公園のSL", yomi:"たかざわこうえんの えすえる", r:80, jit:0, takara:true, note:"日本最大級の蒸気機関車D52。沼津駅北口から徒歩5分。ぬまづの宝100選No.049。"},
-  {lat:35.018618, lng:138.887815, name:"長浜城跡", yomi:"ながはまじょうあと", r:80, jit:0, takara:true, note:"後北条氏の水軍が拠点とした城の跡。国指定史跡。ぬまづの宝100選No.050。"},
-  {lat:35.072921, lng:138.871815, name:"沼津御用邸記念公園", yomi:"ぬまづごようてい きねんこうえん", r:80, jit:0, takara:true, note:"大正天皇の静養のため造られた御用邸。国指定名勝。ぬまづの宝100選No.051。"},
+  {lat:35.105145, lng:138.85552, name:"高沢公園のSL", yomi:"たかざわこうえんの えすえる", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgID4g8_3AQ", heading:111.5, pitch:12.8, note:"日本最大級の蒸気機関車D52。沼津駅北口から徒歩5分。ぬまづの宝100選No.049。"},
+  {lat:35.018618, lng:138.887815, name:"長浜城跡", yomi:"ながはまじょうあと", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICKm9-WWA", heading:336.6, pitch:15.3, note:"後北条氏の水軍が拠点とした城の跡。国指定史跡。ぬまづの宝100選No.050。"},
+  {lat:35.072921, lng:138.871815, name:"沼津御用邸記念公園", yomi:"ぬまづごようてい きねんこうえん", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICEwLfRYw", heading:354.7, pitch:-5.2, note:"大正天皇の静養のため造られた御用邸。国指定名勝。ぬまづの宝100選No.051。"},
   {lat:35.093125, lng:138.852043, name:"浜の観音さん（長谷寺）", yomi:"はまの かんのんさん（はせでら）", r:80, jit:0, takara:true, note:"千本松原の北隣にある時宗の寺。航海安全を祈る観音大曼陀羅で知られる。ぬまづの宝100選No.052。"},
-  {lat:35.10107, lng:138.868905, name:"日枝神社", yomi:"ひえじんじゃ（さんのうさん）", r:80, jit:0, takara:true, note:"平安時代から900年以上の歴史をもつ神社。「山王さん」として親しまれる。ぬまづの宝100選No.053。"},
+  {lat:35.10107, lng:138.868905, name:"日枝神社", yomi:"ひえじんじゃ（さんのうさん）", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDWvZC5sQE", heading:356.2, pitch:0.8, note:"平安時代から900年以上の歴史をもつ神社。「山王さん」として親しまれる。ぬまづの宝100選No.053。"},
   {lat:34.975513, lng:138.777596, name:"松城家住宅", yomi:"まつしろけ じゅうたく", r:80, jit:0, takara:true, note:"廻船業で財を成した松城家の居宅。戸田にある擬洋風建築の国重要文化財。ぬまづの宝100選No.054。"},
   {lat:35.020559, lng:138.897427, name:"安田屋旅館 松棟・月棟", yomi:"やすだや りょかん", r:80, jit:0, takara:true, note:"太宰治が「斜陽」を執筆した旅館。内浦三津。国登録有形文化財。ぬまづの宝100選No.055。"},
   {lat:34.969589, lng:138.771062, name:"洋式帆船建造地跡（ディアナ号/ヘダ号）", yomi:"ようしきはんせん せいぞうちあと", r:80, jit:0, takara:true, note:"幕末、日露が協力して日本初の洋式帆船ヘダ号を建造した地。戸田。県指定史跡。ぬまづの宝100選No.056。"},
   {lat:35.091582, lng:138.850266, name:"明石海人（歌碑）", yomi:"あかしかいじん かひ", r:80, jit:0, takara:true, note:"歌集「白描」で知られる歌人・明石海人の歌碑。千本浜公園内。ぬまづの宝100選No.057。"},
   {lat:35.093299, lng:138.849189, name:"井上靖（文学碑）", yomi:"いのうえやすし ぶんがくひ", r:80, jit:0, takara:true, note:"沼津で育った芥川賞作家・井上靖の文学碑。千本公園内にある。ぬまづの宝100選No.058。"},
-  {lat:35.071206, lng:138.87332, name:"内浦・静浦及び周辺地域の漁撈用具", yomi:"ぎょろうようぐ", r:80, jit:0, takara:true, note:"内浦・静浦周辺に伝わる漁の道具。地域の暮らしの歴史を物語る。ぬまづの宝100選No.059。"},
+  {lat:35.071206, lng:138.87332, name:"内浦・静浦及び周辺地域の漁撈用具", yomi:"ぎょろうようぐ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICM1JLFqgE", heading:217.3, pitch:-12.7, note:"内浦・静浦周辺に伝わる漁の道具。地域の暮らしの歴史を物語る。ぬまづの宝100選No.059。"},
   {lat:35.048884, lng:138.890809, name:"江浦水祝儀と裸参り", yomi:"えのうら みずしゅうぎと はだかまいり", r:80, jit:0, takara:true, note:"江浦に伝わる、海に入って身を清める正月の行事。ぬまづの宝100選No.060。"},
-  {lat:35.028024, lng:138.786536, name:"大瀬まつり・内浦漁港祭", yomi:"おせまつり・うちうらぎょこうさい", r:80, jit:0, takara:true, note:"西浦・内浦の海で行われる、にぎやかな夏の祭り。ぬまづの宝100選No.061。"},
+  {lat:35.028024, lng:138.786536, name:"大瀬まつり・内浦漁港祭", yomi:"おせまつり・うちうらぎょこうさい", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDE9OaXRw", heading:11.0, pitch:-19.4, note:"西浦・内浦の海で行われる、にぎやかな夏の祭り。ぬまづの宝100選No.061。"},
   {lat:35.125121, lng:138.798398, name:"おんべこんべ", yomi:"おんべこんべ", r:80, jit:0, takara:true, note:"原地区に伝わる正月の伝統行事。ぬまづの宝100選No.062。"},
-  {lat:35.073071, lng:138.862549, name:"海中みそぎ", yomi:"かいちゅう みそぎ", r:80, jit:0, takara:true, note:"牛臥海岸で行われる、海に入って身を清める伝統行事。ぬまづの宝100選No.063。"},
+  {lat:35.073071, lng:138.862549, name:"海中みそぎ", yomi:"かいちゅう みそぎ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgID4xuu7Kg", heading:2.5, pitch:-4.4, note:"牛臥海岸で行われる、海に入って身を清める伝統行事。ぬまづの宝100選No.063。"},
   {lat:35.0799, lng:138.861483, name:"我入道の渡し船", yomi:"がにゅうどうの わたしぶね", r:80, jit:0, takara:true, note:"狩野川の河口で、対岸の我入道を結ぶ渡し船。ぬまづの宝100選No.064。"},
-  {lat:35.021415, lng:138.789973, name:"吟道の碑", yomi:"ぎんどうの ひ", r:80, jit:0, takara:true, note:"大瀬崎にある、詩歌をたたえる碑。ぬまづの宝100選No.065。"},
+  {lat:35.021415, lng:138.789973, name:"吟道の碑", yomi:"ぎんどうの ひ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgIDmhcO4-wE", heading:18.1, pitch:7.8, note:"大瀬崎にある、詩歌をたたえる碑。ぬまづの宝100選No.065。"},
   {lat:34.972153, lng:138.763658, name:"ごぜ芸能まつり", yomi:"ごぜ げいのうまつり", r:80, jit:0, takara:true, note:"戸田に伝わる、目の不自由な女性芸能者「瞽女」をしのぶ祭り。ぬまづの宝100選No.066。"},
   {lat:35.074788, lng:138.859606, name:"潮の音プロムナードと文学碑", yomi:"しおのね ぷろむなーどと ぶんがくひ", r:80, jit:0, takara:true, note:"下香貫の海沿いに整備された遊歩道と文学碑。ぬまづの宝100選No.067。"},
   {lat:35.074804, lng:138.861395, name:"芹沢光治良記念館", yomi:"せりざわこうじろう きねんかん", r:80, jit:0, takara:true, note:"我入道生まれの作家・芹沢光治良の記念館。我入道海岸の松原の中。ぬまづの宝100選No.068。"},
-  {lat:35.012122, lng:138.873013, name:"天王祭", yomi:"てんのうさい", r:80, jit:0, takara:true, note:"西浦河内に伝わる、夏の無病息災を願う祭り。ぬまづの宝100選No.069。"},
+  {lat:35.012122, lng:138.873013, name:"天王祭", yomi:"てんのうさい", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICc796wIw", heading:337.5, pitch:-12.9, note:"西浦河内に伝わる、夏の無病息災を願う祭り。ぬまづの宝100選No.069。"},
   {lat:35.087008, lng:138.852026, name:"沼津垣", yomi:"ぬまがき", r:80, jit:0, takara:true, note:"千本浜一帯に伝わる、竹を網代に編んだ風よけの垣根。ぬまづの宝100選No.070。"},
   {lat:35.093971, lng:138.847991, name:"沼津の歌（歌碑）", yomi:"ぬまづの うた（かひ）", r:80, jit:0, takara:true, note:"千本公園内にある、沼津をうたった歌の碑。ぬまづの宝100選No.071。"},
   {lat:35.099639, lng:138.861591, name:"BARのまち・沼津のBAR文化", yomi:"ぬまづの ばーぶんか", r:80, jit:0, takara:true, note:"大手町を中心に、上質なバーが多く集まる沼津の夜の文化。ぬまづの宝100選No.072。"},
@@ -948,18 +1151,18 @@ const TAKARA_ANCHORS = [
   {lat:34.970829, lng:138.790601, name:"戸田たちばな", yomi:"へだ たちばな", r:80, jit:0, takara:true, note:"戸田で育つ、香り高い柑橘「橘」。ぬまづの宝100選No.082。"},
   {lat:34.97193, lng:138.763126, name:"戸田の塩（戸田塩）", yomi:"へだの しお（へだじお）", r:80, jit:0, takara:true, note:"戸田の海水から作られる、まろやかな塩。ぬまづの宝100選No.083。"},
   {lat:35.139637, lng:138.856236, name:"アスルクラロ沼津", yomi:"あするくらろ ぬまづ", r:80, jit:0, takara:true, note:"愛鷹広域公園を本拠とする、沼津のプロサッカークラブ。ぬまづの宝100選No.084。"},
-  {lat:35.097386, lng:138.861199, name:"こいのぼりフェスティバル", yomi:"こいのぼり ふぇすてぃばる", r:80, jit:0, takara:true, note:"狩野川にたくさんの鯉のぼりが泳ぐ、春のイベント。ぬまづの宝100選No.085。"},
+  {lat:35.097386, lng:138.861199, name:"こいのぼりフェスティバル", yomi:"こいのぼり ふぇすてぃばる", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICcgojLLw", heading:210.7, pitch:-2.7, note:"狩野川にたくさんの鯉のぼりが泳ぐ、春のイベント。ぬまづの宝100選No.085。"},
   {lat:35.019314, lng:138.880008, name:"スカンジナビア号（ステラポラリス）", yomi:"すかんじなびあごう しりょうかん", r:80, jit:0, takara:true, note:"西浦木負の海沿いに係留されていた豪華客船の資料館。海のステージ内。ぬまづの宝100選No.086。"},
   {lat:35.101191, lng:138.858306, name:"仲見世通り（七夕まつり）", yomi:"なかみせどおり（たなばたまつり）", r:80, jit:0, takara:true, note:"沼津駅前の商店街。夏には七夕飾りでにぎわう。ぬまづの宝100選No.087。"},
   {lat:35.097253, lng:138.859092, name:"沼津夏まつり・狩野川花火大会", yomi:"ぬまづ なつまつり・かのがわ はなびたいかい", r:80, jit:0, takara:true, note:"狩野川で行われる、沼津の夏の一大花火大会。ぬまづの宝100選No.088。"},
   {lat:35.104046, lng:138.860679, name:"フェンシングのまち", yomi:"ふぇんしんぐの まち", r:80, jit:0, takara:true, note:"沼津はフェンシングが盛んな街として知られる。ぬまづの宝100選No.089。"},
   {lat:34.972884, lng:138.777072, name:"戸田港まつり", yomi:"へだ みなとまつり", r:80, jit:0, takara:true, note:"戸田港で行われる、夏の港の祭り。ぬまづの宝100選No.090。"},
   {lat:35.083125, lng:138.857596, name:"よさこい東海道", yomi:"よさこい とうかいどう", r:80, jit:0, takara:true, note:"大手町などを舞台に踊る、よさこいの祭典。ぬまづの宝100選No.091。"},
-  {lat:35.017703, lng:138.893357, name:"ラブライブ！サンシャイン!!の聖地", yomi:"みのうら そうごうあんないじょ", r:80, jit:0, takara:true, note:"内浦長浜にある観光案内所。アニメ「ラブライブ！サンシャイン!!」の聖地。ぬまづの宝100選No.092。"},
-  {lat:35.020844, lng:138.862088, name:"らららサンビーチ", yomi:"らららさんびーち", r:80, jit:0, takara:true, note:"伊豆西海岸で数少ない白砂の人工海浜。西浦平沢にある。ぬまづの宝100選No.093。"},
+  {lat:35.017703, lng:138.893357, name:"ラブライブ！サンシャイン!!の聖地", yomi:"みのうら そうごうあんないじょ", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICEody_pAE", heading:114.3, pitch:-1.1, note:"内浦長浜にある観光案内所。アニメ「ラブライブ！サンシャイン!!」の聖地。ぬまづの宝100選No.092。"},
+  {lat:35.020844, lng:138.862088, name:"らららサンビーチ", yomi:"らららさんびーち", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgID4ycT-Tw", heading:206.6, pitch:9.1, note:"伊豆西海岸で数少ない白砂の人工海浜。西浦平沢にある。ぬまづの宝100選No.093。"},
   {lat:35.106719, lng:138.898776, name:"泉水源地", yomi:"いずみすいげんち", r:80, jit:0, takara:true, note:"沼津の水道水の源泉。日本の名水百選・柿田川湧水群の中にあり、東洋一の湧水量を誇る。ぬまづの宝100選No.094。"},
   {lat:34.976713, lng:138.765965, name:"深海魚", yomi:"しんかいぎょ", r:80, jit:0, takara:true, note:"駿河湾でとれる、めずらしい深海の魚たち。ぬまづの宝100選No.095。"},
-  {lat:35.157636, lng:138.849288, name:"せせらぎの径と沼津ホタルまつり", yomi:"せせらぎのみちと ぬまづ ほたるまつり", r:80, jit:0, takara:true, note:"愛鷹広域公園の遊歩道。初夏にはホタルが舞う。ぬまづの宝100選No.096。"},
+  {lat:35.157636, lng:138.849288, name:"せせらぎの径と沼津ホタルまつり", yomi:"せせらぎのみちと ぬまづ ほたるまつり", r:80, jit:0, takara:true, panoId:"CIHM0ogKEICAgICjttHrbg", heading:214.1, pitch:6.3, note:"愛鷹広域公園の遊歩道。初夏にはホタルが舞う。ぬまづの宝100選No.096。"},
   {lat:34.9701, lng:138.776927, name:"タカアシガニと甲羅のお面", yomi:"たかあしがにと こうらの おめん", r:80, jit:0, takara:true, note:"駿河湾の深海にすむタカアシガニ。甲羅でお面も作られる。ぬまづの宝100選No.097。"},
   {lat:35.081685, lng:138.855046, name:"沼津港と大型展望水門びゅうお", yomi:"ぬまづこう・びゅうお", r:80, jit:0, takara:true, note:"食と観光の名所・沼津港のランドマーク。国内最大級の大型展望水門。ぬまづの宝100選No.098。"},
   {lat:35.153272, lng:138.801995, name:"沼津茶と茶の湯・茶会文化", yomi:"ぬまづちゃと ちゃのゆ・ちゃかいぶんか", r:80, jit:0, takara:true, note:"愛鷹山麓で育つ沼津茶と、地域に根づく茶会の文化。ぬまづの宝100選No.099。"},
@@ -1048,6 +1251,14 @@ function makeSeedIndices(){
 function findPanoAt(sv, anchor){
   // 宝100選は「すぐそば」を出したいので、専用のていねいな探索（50mから少しずつ拡大）
   if(anchor.takara){
+    if(anchor.panoId){
+      return Promise.resolve({
+        panoId: anchor.panoId,
+        pos: new google.maps.LatLng(anchor.lat, anchor.lng),
+        hint: anchor.name, yomi: anchor.yomi, note: anchor.note||null,
+        heading: anchor.heading||0, pitch: anchor.pitch||0
+      });
+    }
     return new Promise((resolve)=>{
       const radii=[50,80,120,180,260,360]; // m。近いところから順に試す
       let i=0;
@@ -1153,7 +1364,7 @@ async function startRound(){
     }catch(e){}
   }
   if(found.panoId) pano.setPano(found.panoId);
-  pano.setPov({heading:Math.random()*360, pitch:0});
+  pano.setPov(found.heading!=null?{heading:found.heading,pitch:found.pitch||0}:{heading:Math.random()*360,pitch:0});
   pano.setVisible(true);
   map.setCenter(NUMAZU.center); map.setZoom(12);
   if(round===1){
@@ -1219,6 +1430,19 @@ function submitGuess(fromTimer=false, noAnswer=false){
       tn.style.display="block";
     } else {
       tn.style.display="none";
+    }
+  }
+  // 宝100選コレクション：20m以内でゲット
+  if((difficulty==="takara"||difficulty==="takara-hard") && target.takaraNo && km !== null && km * 1000 <= TAKARA_COLLECT_M){
+    const tno = target.takaraNo;
+    const col = getTakaraCollection();
+    if(!col.includes(tno)){
+      col.push(tno);
+      try{ localStorage.setItem(_TAKARA_COL_KEY, JSON.stringify(col)); }catch(e){}
+      takaraNewThisGame.push(tno);
+    }
+    if(tn && tn.style.display !== "none"){
+      tn.innerHTML += ' <span class="badge" style="background:#e9a820;color:#fff;">お宝ゲット！</span>';
     }
   }
   if(noAnswer || !guessLatLng){
@@ -1410,6 +1634,26 @@ function showFinal(){
     document.getElementById("restartBtn").style.display="";
     const rb=document.getElementById("reviewBtn"); if(rb) rb.style.display = (myReview.length? "":"none");
     showBestScore();
+  }
+  // 宝100選図鑑ボタン表示
+  const _tfcb = document.getElementById("takaraFinalColBtn");
+  if(_tfcb){
+    const isTakaraMode = (difficulty==="takara"||difficulty==="takara-hard");
+    const _tcol = getTakaraCollection();
+    _tfcb.style.display = (isTakaraMode || _tcol.length > 0) ? "" : "none";
+    if(takaraNewThisGame.length > 0){
+      const _existing = document.getElementById("takaraBanner");
+      if(!_existing){
+        const _banner = document.createElement("div");
+        _banner.id = "takaraBanner";
+        _banner.className = "takara-new-banner";
+        const _rk = rankTakara(_tcol.length);
+        _banner.innerHTML = "お宝 " + takaraNewThisGame.length + " 個をゲットしました！" +
+          (_rk ? ' <span class="takara-rank-badge '+_rk.cls+'" style="font-size:11px;padding:2px 10px;">'+escapeHtml(_rk.label)+'</span>' : "");
+        _tfcb.parentNode.insertBefore(_banner, _tfcb);
+      }
+      takaraNewThisGame = [];
+    }
   }
   document.getElementById("finalOverlay").classList.add("show");
 }
@@ -1796,10 +2040,77 @@ function setDifficulty(d){
   if(sp) sp.classList.toggle("takara-hard-on", d==="takara-hard");
   if(sp) sp.classList.toggle("hard-on", d==="hard");
 }
+function getTakaraCollection(){ try{ return JSON.parse(localStorage.getItem(_TAKARA_COL_KEY)||"[]"); }catch(e){ return []; } }
+function rankTakara(count){
+  if(count>=100) return {label:"沼津の宝100選マスター",cls:"takara-rank-master"};
+  if(count>=80)  return {label:"沼津の宝100選名人",   cls:"takara-rank-meijin"};
+  if(count>=60)  return {label:"沼津の宝100選先生",   cls:"takara-rank-sensei"};
+  return null;
+}
+function openTakaraLightbox(no){
+  const lb=document.getElementById("takaraLightbox");
+  if(!lb) return;
+  const col=getTakaraCollection();
+  if(!col.includes(no)) return;
+  document.getElementById("tlbNo").textContent="No."+String(no).padStart(3,"0");
+  document.getElementById("tlbImg").src=TAKARA_PHOTO_MAP[no]||"";
+  document.getElementById("tlbName").textContent=TAKARA_NAMES[no]||"";
+  const ua=document.getElementById("tlbUrl");
+  if(TAKARA_URLS[no]){ ua.href=TAKARA_URLS[no]; ua.textContent="沼津市公式ページを見る"; ua.style.display=""; }
+  else { ua.style.display="none"; }
+  lb.classList.add("show");
+}
+function showTakaraCollection(){
+  const ov=document.getElementById("takaraColOverlay");
+  if(!ov) return;
+  const col=getTakaraCollection();
+  document.getElementById("takaraColCount").textContent=col.length+" / 100";
+  const rr=document.getElementById("takaraColRankRow");
+  const rk=rankTakara(col.length);
+  rr.innerHTML=rk?'<span class="takara-rank-badge '+rk.cls+'">'+escapeHtml(rk.label)+'</span>':"";
+  const grid=document.getElementById("takaraColGrid");
+  grid.innerHTML="";
+  for(let i=1;i<=100;i++){
+    const got=col.includes(i);
+    const cell=document.createElement("div");
+    cell.className="takara-col-cell"+(got?" got":"");
+    if(got){
+      const img=document.createElement("img");
+      img.src=TAKARA_PHOTO_MAP[i]||"";
+      img.alt=TAKARA_NAMES[i]||"";
+      img.onerror=function(){ this.style.display="none"; };
+      cell.appendChild(img);
+      cell.onclick=()=>openTakaraLightbox(i);
+    } else {
+      const lk=document.createElement("div"); lk.className="tcell-lock"; lk.textContent="？";
+      cell.appendChild(lk);
+    }
+    const num=document.createElement("div"); num.className="tcell-num"; num.textContent=String(i).padStart(3,"0");
+    const nm=document.createElement("div"); nm.className="tcell-name"; nm.textContent=TAKARA_NAMES[i]||String(i);
+    cell.appendChild(num); cell.appendChild(nm);
+    grid.appendChild(cell);
+  }
+  ov.classList.add("show");
+}
+
+document.getElementById("takaraColSplashBtn").onclick=showTakaraCollection;
+document.getElementById("takaraFinalColBtn").onclick=showTakaraCollection;
+document.getElementById("takaraColCloseBtn").onclick=()=>document.getElementById("takaraColOverlay").classList.remove("show");
+document.getElementById("tlbClose").onclick=()=>document.getElementById("takaraLightbox").classList.remove("show");
+
+
 document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
 document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
 document.getElementById("diffTakara").onclick=()=>setDifficulty("takara");
 document.getElementById("diffTakaraHard").onclick=()=>setDifficulty("takara-hard");
+
+// takaraColSplashBtn 表示制御は setDifficulty 内に移動済み
+const _origSetDiff = setDifficulty;
+setDifficulty = function(d){
+  _origSetDiff(d);
+  const _tcsb = document.getElementById("takaraColSplashBtn");
+  if(_tcsb) _tcsb.style.display = (d==="takara"||d==="takara-hard") ? "block" : "none";
+};
 
 // ===== 待合室の沼津ミニ情報スライド =====
 // イラストは写真の転載ではなく、特徴をとらえた手描き風のオリジナル。色はトップ画面と統一。
