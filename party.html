@@ -2033,6 +2033,8 @@ function setDifficulty(d){
   if(sp) sp.classList.toggle("takara-on", d==="takara");
   if(sp) sp.classList.toggle("takara-hard-on", d==="takara-hard");
   if(sp) sp.classList.toggle("hard-on", d==="hard");
+  const _tcsb=document.getElementById("takaraColSplashBtn");
+  if(_tcsb) _tcsb.style.display=(d==="takara"||d==="takara-hard")?"block":"none";
 }
 function getTakaraCollection(){ try{ return JSON.parse(localStorage.getItem(_TAKARA_COL_KEY)||"[]"); }catch(e){ return []; } }
 function rankTakara(count){
@@ -2102,14 +2104,6 @@ document.getElementById("diffEasy").onclick=()=>setDifficulty("easy");
 document.getElementById("diffHard").onclick=()=>setDifficulty("hard");
 document.getElementById("diffTakara").onclick=()=>setDifficulty("takara");
 document.getElementById("diffTakaraHard").onclick=()=>setDifficulty("takara-hard");
-
-// takaraColSplashBtn 表示制御は setDifficulty 内に移動済み
-const _origSetDiff = setDifficulty;
-setDifficulty = function(d){
-  _origSetDiff(d);
-  const _tcsb = document.getElementById("takaraColSplashBtn");
-  if(_tcsb) _tcsb.style.display = (d==="takara"||d==="takara-hard") ? "block" : "none";
-};
 
 // ===== 待合室の沼津ミニ情報スライド =====
 // イラストは写真の転載ではなく、特徴をとらえた手描き風のオリジナル。色はトップ画面と統一。
