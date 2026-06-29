@@ -1005,6 +1005,7 @@ const TAKARA_URLS = {
 const _TAKARA_COL_KEY = "numaGuesserTakaraCollection";
 const TAKARA_COLLECT_M = 20;
 let takaraNewThisGame = [];
+let _unseenNewTakara = new Set();
 
 // ============================================================
 //  ▲▲▲ 設定はここまで ▲▲▲
@@ -1432,6 +1433,7 @@ function submitGuess(fromTimer=false, noAnswer=false){
       col.push(tno);
       try{ localStorage.setItem(_TAKARA_COL_KEY, JSON.stringify(col)); }catch(e){}
       takaraNewThisGame.push(tno);
+      _unseenNewTakara.add(tno);
     }
     if(tn && tn.style.display !== "none"){
       tn.innerHTML += ' <span class="badge" style="background:#e9a820;color:#fff;">お宝ゲット！</span>';
@@ -2072,6 +2074,10 @@ function showTakaraCollection(){
       img.alt=TAKARA_NAMES[i]||"";
       img.onerror=function(){ this.style.display="none"; };
       cell.appendChild(img);
+      if(_unseenNewTakara.has(i)){
+        const nb=document.createElement("div"); nb.className="card-new-badge"; nb.textContent="NEW";
+        cell.appendChild(nb);
+      }
       cell.onclick=()=>openTakaraLightbox(i);
     } else {
       const lk=document.createElement("div"); lk.className="tcell-lock"; lk.textContent="？";
