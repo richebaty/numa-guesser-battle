@@ -1273,7 +1273,7 @@ function findPanoAt(sv, anchor){
         }
         sv.getPanorama({location:{lat:anchor.lat,lng:anchor.lng}, radius:radii[i], source:google.maps.StreetViewSource.OUTDOOR},
           (data,status)=>{
-            if(status==="OK"){ resolve({panoId:data.location.pano,pos:data.location.latLng,hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null}); }
+            if(status==="OK"){ resolve({panoId:data.location.pano,pos:new google.maps.LatLng(anchor.lat,anchor.lng),hint:anchor.name,yomi:anchor.yomi,note:anchor.note||null,collectM:anchor.collectM||20}); }
             else { i++; tryNext(); }
           });
       };
@@ -1792,6 +1792,8 @@ function closeReview(){
 }
 function restart(){
   myReview=[]; total=0; round=0;
+  takaraNewThisGame=[];
+  _unseenNewTakara.clear(); try{ localStorage.setItem(_TAKARA_UNSEEN_KEY,"[]"); }catch(e){}
   buildRoundOrder();
   document.getElementById("totalScore").textContent="0";
   document.getElementById("finalOverlay").classList.remove("show");
