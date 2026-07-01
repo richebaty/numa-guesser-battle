@@ -2265,4 +2265,12 @@ checkPublishPeriod();
   try{
     const params=new URLSearchParams(location.search);
     const code=(params.get("join")||"").trim().toUpperCase();
-    
+        if(code && code.length>=1 && code.length<=4){
+      // スプラッシュのボタン群を飛ばして、参加ボックスを開く
+      showJoin(code);
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
