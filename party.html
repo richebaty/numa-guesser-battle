@@ -2137,6 +2137,7 @@ function setDifficulty(d){
   document.getElementById("diffHard").classList.toggle("active", d==="hard");
   document.getElementById("diffTakara").classList.toggle("active", d==="takara");
   document.getElementById("diffTakaraHard").classList.toggle("active", d==="takara-hard");
+  document.getElementById("diffTakaraMarathon").classList.toggle("active", d==="takara-marathon");
   let note;
   if(d==="easy") note="中心部や港など、わかりやすい場所から出題します";
   else if(d==="hard") note="市内すみずみから出題（上級・制限時間30秒）";
